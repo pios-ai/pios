@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: pios-backend
+    ports:
+      - "8000:8000"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PIOS_DEBUG: "false"
+    volumes:
+      - pios-data:/app/data
+      - pios-vault:/root/.pios
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.frontend
+    container_name: pios-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: "http://localhost:8000"
+    restart: unless-stopped
+
+volumes:
+  pios-data:
+  pios-vault:

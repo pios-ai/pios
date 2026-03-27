@@ -1,0 +1,24 @@
+name: source-chatgpt
+version: 0.1.0
+type: source
+description: Fetches conversation history from ChatGPT/OpenAI
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  openai_api_key:
+    type: string
+    description: OpenAI API key
+  fetch_conversations:
+    type: boolean
+    default: true
+    description: Fetch conversation history
+
+schedule: "0 2 * * *"  # Daily at 2 AM
+
+outputs:
+  - conversation
+  - analysis
+
+permissions:
+  - read:openai

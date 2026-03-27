@@ -1,0 +1,29 @@
+name: source-immich
+version: 0.1.0
+type: source
+description: Fetches photos and videos from Immich
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  immich_api_url:
+    type: string
+    description: Immich API server URL
+  immich_api_key:
+    type: string
+    description: Immich API key
+  sync_albums:
+    type: boolean
+    default: true
+    description: Sync albums
+
+schedule: "0 */6 * * *"  # Every 6 hours
+
+outputs:
+  - photo
+  - video
+  - album
+
+permissions:
+  - read:photos
+  - read:videos

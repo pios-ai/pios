@@ -1,0 +1,29 @@
+name: agent-daily-digest
+version: 0.1.0
+type: agent
+description: Creates a daily digest of all collected data
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  digest_time:
+    type: string
+    default: "08:00"
+    description: Time to generate digest (HH:MM format)
+  include_sources:
+    type: array
+    default: []
+    description: Sources to include (empty = all)
+  max_items_per_source:
+    type: integer
+    default: 5
+    description: Maximum items to include per source
+
+schedule: "0 8 * * *"  # Daily at 8 AM
+
+outputs:
+  - daily-digest
+
+permissions:
+  - read:documents
+  - write:documents

@@ -1,0 +1,28 @@
+name: source-apple-health
+version: 0.1.0
+type: source
+description: Fetches health and fitness data from Apple Health
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  health_kit_token:
+    type: string
+    description: Health Kit API token
+  sync_days:
+    type: integer
+    default: 7
+    description: Number of days to sync back
+
+schedule: "0 6 * * *"  # Daily at 6 AM
+
+outputs:
+  - heart_rate
+  - steps
+  - sleep
+  - workout
+  - nutrition
+
+permissions:
+  - read:health
+  - read:fitness

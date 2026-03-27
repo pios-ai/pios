@@ -1,0 +1,30 @@
+name: agent-health-monitor
+version: 0.1.0
+type: agent
+description: Monitors health metrics and generates alerts
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  alert_threshold_steps:
+    type: integer
+    default: 5000
+    description: Daily steps alert threshold
+  alert_threshold_sleep:
+    type: integer
+    default: 6
+    description: Minimum sleep hours threshold
+  check_interval_hours:
+    type: integer
+    default: 6
+    description: How often to check metrics
+
+schedule: "0 */6 * * *"  # Every 6 hours
+
+outputs:
+  - health-alert
+  - health-analysis
+
+permissions:
+  - read:documents
+  - write:documents

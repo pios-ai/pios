@@ -1,0 +1,30 @@
+name: source-wechat
+version: 0.1.0
+type: source
+description: Fetches messages and moments from WeChat
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  wechat_api_key:
+    type: string
+    description: WeChat API key
+  sync_messages:
+    type: boolean
+    default: true
+    description: Sync messages
+  sync_moments:
+    type: boolean
+    default: true
+    description: Sync moments (Moments feed)
+
+schedule: "*/15 * * * *"  # Every 15 minutes
+
+outputs:
+  - message
+  - moment
+  - contact
+
+permissions:
+  - read:wechat
+  - read:messages
