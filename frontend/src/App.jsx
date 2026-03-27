@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Plugins from './pages/Plugins'
@@ -6,26 +6,10 @@ import Documents from './pages/Documents'
 import './index.css'
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('dashboard')
-
-  // Route based on page state
-  let PageComponent
-  switch (currentPage) {
-    case 'plugins':
-      PageComponent = Plugins
-      break
-    case 'documents':
-      PageComponent = Documents
-      break
-    default:
-      PageComponent = Dashboard
-  }
-
-  // Also support hash-based routing
-  const hashPage = window.location.hash.slice(1) || 'dashboard'
+  const path = window.location.pathname.replace(/^\//, '') || 'dashboard'
 
   let PageToRender
-  switch (hashPage) {
+  switch (path) {
     case 'plugins':
       PageToRender = Plugins
       break

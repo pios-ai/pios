@@ -301,7 +301,7 @@ class Database:
             VALUES (?, ?, ?)
             ON CONFLICT(plugin_name) DO UPDATE SET state_data = ?, updated_at = ?
             """,
-            (plugin_name, state_data, state_data, now),
+            (plugin_name, state_data, now, state_data, now),
         )
         self.commit()
 

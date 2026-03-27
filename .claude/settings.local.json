@@ -3,7 +3,19 @@
     "allow": [
       "Bash(npm --version)",
       "Bash(python -c \"from pios.main import app; print\\(''Import OK''\\)\")",
-      "Bash(python -c \":*)"
+      "Bash(python -c \":*)",
+      "Bash(curl -s http://localhost:8000/api/system/status)",
+      "Bash(python3 -m json.tool)",
+      "Bash(python3 -c \":*)",
+      "Bash(npm install:*)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(pkill -f \"uvicorn pios.main\")",
+      "Bash(pkill -f \"vite\")",
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(make dev:*)",
+      "Bash(python3 -m json.tool echo \"\" echo \"=== 前端 proxy 到后端 ===\" curl -s http://localhost:5173/api/system/status)",
+      "Bash(python3 -m json.tool echo \"\" echo \"=== 前端 Dashboard 页面 ===\" curl -s http://localhost:5173/)",
+      "Bash(curl -s http://localhost:5173/api/system/status)"
     ]
   }
 }

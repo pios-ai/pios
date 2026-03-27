@@ -82,7 +82,8 @@ class DocumentStore:
             year = "unknown"
             month = "unknown"
 
-        doc_dir = self.vault_path / source / data_type / str(year) / f"{month:02d}"
+        month_str = f"{month:02d}" if isinstance(month, int) else str(month)
+        doc_dir = self.vault_path / source / data_type / str(year) / month_str
         doc_dir.mkdir(parents=True, exist_ok=True)
 
         # Save as markdown file

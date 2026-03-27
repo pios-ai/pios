@@ -1,15 +1,15 @@
 """Document API routes."""
 
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel
+
+from ..deps import get_database, get_document_store
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 
 class DocumentInfo(BaseModel):
-    """Document information."""
-
     doc_id: str
     source: str
     type: str
@@ -20,10 +20,41 @@ class DocumentInfo(BaseModel):
 
 
 class DocumentListResponse(BaseModel):
-    """List of documents."""
-
     total: int
     documents: List[DocumentInfo]
+
+
+@router.get("/stats")
+async def get_document_stats(
+    database=Depends(get_database),
+    document_store=Depends(get_document_store),
+):
+    """Get document vault statistics."""
+    db_stats = database.get_stats() if database else {}
+    vault_stats = document_store.get_stats() if document_store else {}
+    return {"database": db_stats, "vault": vault_stats}
+
+
+@router.get("/search/query")
+async def search_documents(
+    q: str = Query(..., min_length=1),
+    limit: int = Query(50),
+    document_store=Depends(get_document_store),
+):
+    """Search documents."""
+    if not document_store:
+        raise HTTPException(status_code=500, detail="Document store not available")
+
+    results = document_store.search(q, limit=limit)
+    return {
+        "query": q,
+        "total": len(results),
+        "results": [
+            {"id": doc.doc_id, "source": doc.source, "type": doc.data_type,
+             "title": doc.title, "date": doc.date}
+            for doc in results
+        ],
+    }
 
 
 @router.get("/", response_model=DocumentListResponse)
@@ -32,24 +63,13 @@ async def list_documents(
     doc_type: Optional[str] = Query(None),
     limit: int = Query(100),
     offset: int = Query(0),
-    database=None,
+    database=Depends(get_database),
 ):
     """List documents from vault."""
     if not database:
         raise HTTPException(status_code=500, detail="Database not available")
 
-    docs = database.get_documents(
-        source=source,
-        doc_type=doc_type,
-        limit=limit + 1,
-        offset=offset,
-    )
-
-    # Check if there are more results
-    has_more = len(docs) > limit
-    if has_more:
-        docs = docs[:limit]
-
+    docs = database.get_documents(source=source, doc_type=doc_type, limit=limit, offset=offset)
     doc_infos = [
         DocumentInfo(
             doc_id=doc["id"],
@@ -62,15 +82,11 @@ async def list_documents(
         )
         for doc in docs
     ]
-
-    return DocumentListResponse(
-        total=len(doc_infos),
-        documents=doc_infos,
-    )
+    return DocumentListResponse(total=len(doc_infos), documents=doc_infos)
 
 
 @router.get("/{doc_id}")
-async def get_document(doc_id: str, document_store=None):
+async def get_document(doc_id: str, document_store=Depends(get_document_store)):
     """Get a document."""
     if not document_store:
         raise HTTPException(status_code=500, detail="Document store not available")
@@ -80,59 +96,7 @@ async def get_document(doc_id: str, document_store=None):
         raise HTTPException(status_code=404, detail=f"Document {doc_id} not found")
 
     return {
-        "id": doc.doc_id,
-        "source": doc.source,
-        "type": doc.data_type,
-        "title": doc.title,
-        "date": doc.date,
-        "tags": doc.tags,
-        "content": doc.content,
-        "created_at": doc.created_at,
-        "updated_at": doc.updated_at,
-    }
-
-
-@router.get("/search/query")
-async def search_documents(
-    q: str = Query(..., min_length=1),
-    limit: int = Query(50),
-    document_store=None,
-):
-    """Search documents."""
-    if not document_store:
-        raise HTTPException(status_code=500, detail="Document store not available")
-
-    results = document_store.search(q, limit=limit)
-
-    return {
-        "query": q,
-        "total": len(results),
-        "results": [
-            {
-                "id": doc.doc_id,
-                "source": doc.source,
-                "type": doc.data_type,
-                "title": doc.title,
-                "date": doc.date,
-            }
-            for doc in results
-        ],
-    }
-
-
-@router.get("/stats")
-async def get_document_stats(database=None, document_store=None):
-    """Get document vault statistics."""
-    db_stats = {}
-    vault_stats = {}
-
-    if database:
-        db_stats = database.get_stats()
-
-    if document_store:
-        vault_stats = document_store.get_stats()
-
-    return {
-        "database": db_stats,
-        "vault": vault_stats,
+        "id": doc.doc_id, "source": doc.source, "type": doc.data_type,
+        "title": doc.title, "date": doc.date, "tags": doc.tags,
+        "content": doc.content, "created_at": doc.created_at, "updated_at": doc.updated_at,
     }

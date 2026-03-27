@@ -26,7 +26,7 @@ class PiOSScheduler:
         self.enabled = enabled
         self.max_workers = max_workers
         self.scheduler = BackgroundScheduler(
-            max_instances=max_workers,
+            job_defaults={"max_instances": max_workers},
             timezone=timezone,
         )
         self._scheduled_jobs = {}
@@ -87,7 +87,7 @@ class PiOSScheduler:
                 "func": func.__name__,
                 "trigger": "cron",
                 "cron": cron_expression,
-                "next_run": job.next_run_time,
+                "next_run": getattr(job, "next_run_time", None),
             }
             logger.info(f"Added cron job {job_id} with schedule: {cron_expression}")
             return job_id
@@ -135,7 +135,7 @@ class PiOSScheduler:
                 "func": func.__name__,
                 "trigger": "interval",
                 "seconds": seconds,
-                "next_run": job.next_run_time,
+                "next_run": getattr(job, "next_run_time", None),
             }
             logger.info(f"Added interval job {job_id} with interval: {seconds}s")
             return job_id
@@ -184,7 +184,7 @@ class PiOSScheduler:
                 "func": func.__name__,
                 "trigger": "once",
                 "run_at": run_at,
-                "next_run": job.next_run_time,
+                "next_run": getattr(job, "next_run_time", None),
             }
             logger.info(f"Added one-time job {job_id} to run at {run_at}")
             return job_id

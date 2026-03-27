@@ -272,7 +272,8 @@ class PluginManager:
         if manifest.schedule:
             job = self.scheduler.scheduler.get_job(f"plugin-{plugin_name}")
             if job:
-                next_run = job.next_run_time.isoformat() if job.next_run_time else None
+                nrt = getattr(job, "next_run_time", None)
+                next_run = nrt.isoformat() if nrt else None
 
         return PluginStatus(
             name=manifest.name,

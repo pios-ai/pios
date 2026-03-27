@@ -2,11 +2,13 @@
 
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class PluginManifest(BaseModel):
     """Plugin manifest structure from plugin.yaml."""
+
+    model_config = ConfigDict(extra="allow")
 
     name: str
     version: str
@@ -20,9 +22,6 @@ class PluginManifest(BaseModel):
     outputs: List[str] = []
     permissions: List[str] = []
     dependencies: List[str] = []
-
-    class Config:
-        extra = "allow"
 
 
 @dataclass

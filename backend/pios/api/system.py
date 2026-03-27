@@ -1,23 +1,25 @@
 """System API routes."""
 
 from typing import Dict, Any
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends
+
+from ..deps import get_config, get_database, get_scheduler, get_plugin_manager
 
 router = APIRouter(prefix="/api/system", tags=["system"])
 
 
 @router.get("/status")
 async def get_system_status(
-    config=None,
-    database=None,
-    scheduler=None,
-    plugin_manager=None,
+    config=Depends(get_config),
+    database=Depends(get_database),
+    scheduler=Depends(get_scheduler),
+    plugin_manager=Depends(get_plugin_manager),
 ) -> Dict[str, Any]:
     """Get overall system status."""
     db_status = "disconnected"
     if database:
         try:
-            stats = database.get_stats()
+            database.get_stats()
             db_status = "connected"
         except Exception as e:
             db_status = f"error: {str(e)}"
@@ -54,9 +56,10 @@ async def health_check() -> Dict[str, str]:
 
 
 @router.get("/config")
-async def get_config(config=None) -> Dict[str, Any]:
+async def get_config_endpoint(config=Depends(get_config)) -> Dict[str, Any]:
     """Get current configuration (non-sensitive)."""
     if not config:
+        from fastapi import HTTPException
         raise HTTPException(status_code=500, detail="Config not available")
 
     return {
@@ -79,5 +82,4 @@ async def get_config(config=None) -> Dict[str, Any]:
 async def get_version() -> Dict[str, str]:
     """Get PiOS version."""
     from pios import __version__
-
     return {"version": __version__}
