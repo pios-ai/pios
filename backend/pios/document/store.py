@@ -68,22 +68,22 @@ class DocumentStore:
         # Compute content hash
         doc.content_hash = doc.compute_hash()
 
-        # Create nested directory structure by source/type/year/month
+        # Create nested directory structure: vault/source/YYYY/MM/DD/
         if date:
             from datetime import datetime as dt
             try:
                 parsed_date = dt.fromisoformat(date)
                 year = parsed_date.year
                 month = parsed_date.month
+                day = parsed_date.day
             except (ValueError, AttributeError):
-                year = "unknown"
-                month = "unknown"
+                year, month, day = "unknown", "unknown", "unknown"
         else:
-            year = "unknown"
-            month = "unknown"
+            year, month, day = "unknown", "unknown", "unknown"
 
         month_str = f"{month:02d}" if isinstance(month, int) else str(month)
-        doc_dir = self.vault_path / source / data_type / str(year) / month_str
+        day_str = f"{day:02d}" if isinstance(day, int) else str(day)
+        doc_dir = self.vault_path / source / str(year) / month_str / day_str
         doc_dir.mkdir(parents=True, exist_ok=True)
 
         # Save as markdown file
@@ -133,6 +133,9 @@ class DocumentStore:
         self,
         source: Optional[str] = None,
         data_type: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        tags: Optional[List[str]] = None,
         limit: int = 100,
     ) -> List[Document]:
         """List documents from vault.
@@ -140,6 +143,9 @@ class DocumentStore:
         Args:
             source: Filter by source
             data_type: Filter by type
+            date_from: Filter date >= (YYYY-MM-DD)
+            date_to: Filter date <= (YYYY-MM-DD)
+            tags: Filter by tags (any match)
             limit: Maximum results
 
         Returns:
@@ -151,6 +157,9 @@ class DocumentStore:
         db_results = self.database.get_documents(
             source=source,
             doc_type=data_type,
+            date_from=date_from,
+            date_to=date_to,
+            tags=tags,
             limit=limit,
         )
 

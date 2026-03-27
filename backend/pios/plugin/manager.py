@@ -2,6 +2,7 @@
 
 import logging
 import importlib.util
+import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Any
@@ -70,6 +71,82 @@ class PluginManager:
         logger.info(f"Discovered {len(discovered)} plugins: {discovered}")
         return discovered
 
+    def _install_requirements(self, plugin_path: Path, plugin_name: str) -> None:
+        """Install pip requirements for a plugin if requirements.txt exists.
+
+        Args:
+            plugin_path: Path to plugin directory
+            plugin_name: Plugin name for logging
+        """
+        req_file = plugin_path / "requirements.txt"
+        if not req_file.exists():
+            return
+        logger.info(f"Installing requirements for {plugin_name} from {req_file}")
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", "-r", str(req_file), "-q"],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode == 0:
+                logger.info(f"Requirements installed for {plugin_name}")
+            else:
+                logger.error(f"Failed to install requirements for {plugin_name}: {result.stderr}")
+        except Exception as e:
+            logger.error(f"Error installing requirements for {plugin_name}: {e}")
+
+    def enable_plugin(self, plugin_name: str) -> bool:
+        """Enable a plugin and persist the state.
+
+        Args:
+            plugin_name: Name of plugin to enable
+
+        Returns:
+            True if successful
+        """
+        if plugin_name not in self.manifests:
+            return False
+        if self.database:
+            self.database.set_plugin_enabled(plugin_name, True)
+        if plugin_name not in self.instances:
+            self.load_plugin(plugin_name)
+        logger.info(f"Enabled plugin {plugin_name}")
+        return True
+
+    def disable_plugin(self, plugin_name: str) -> bool:
+        """Disable a plugin and persist the state.
+
+        Args:
+            plugin_name: Name of plugin to disable
+
+        Returns:
+            True if successful
+        """
+        if plugin_name not in self.manifests:
+            return False
+        if self.database:
+            self.database.set_plugin_enabled(plugin_name, False)
+        self.unload_plugin(plugin_name)
+        logger.info(f"Disabled plugin {plugin_name}")
+        return True
+
+    def is_plugin_enabled(self, plugin_name: str) -> bool:
+        """Check if a plugin is enabled (from DB or in-memory).
+
+        Args:
+            plugin_name: Name of plugin
+
+        Returns:
+            True if enabled
+        """
+        if self.database:
+            cfg = self.database.get_plugin_config(plugin_name)
+            if cfg is not None:
+                return bool(cfg["enabled"])
+        # Default: enabled if manifest is loaded
+        return plugin_name in self.manifests
+
     def _load_plugin_manifest(self, plugin_path: Path) -> bool:
         """Load and validate plugin manifest.
 
@@ -124,6 +201,9 @@ class PluginManager:
         plugin_path = self.plugins[plugin_name]
         manifest = self.manifests[plugin_name]
 
+        # Install any pip requirements before loading
+        self._install_requirements(plugin_path, plugin_name)
+
         try:
             # Load plugin module
             init_file = plugin_path / "__init__.py"
@@ -158,12 +238,29 @@ class PluginManager:
                 logger.error(f"Could not find plugin class in {plugin_name}")
                 return None
 
+            # Build config: start from schema defaults, then overlay DB overrides
+            plugin_config: Dict[str, Any] = {}
+            for key, schema_val in manifest.config_schema.items():
+                if isinstance(schema_val, dict) and "default" in schema_val:
+                    plugin_config[key] = schema_val["default"]
+
+            # Apply user overrides from DB if any
+            if self.database:
+                import json as _json
+                db_cfg = self.database.get_plugin_config(plugin_name)
+                if db_cfg and db_cfg.get("config_overrides"):
+                    try:
+                        overrides = _json.loads(db_cfg["config_overrides"])
+                        plugin_config.update(overrides)
+                    except Exception:
+                        pass
+
             # Create context
             context = PluginContext(
                 plugin_name=manifest.name,
                 plugin_version=manifest.version,
                 logger=logger,
-                config=manifest.config_schema.copy(),
+                config=plugin_config,
                 llm=self.llm,
                 document_store=self.document_store,
                 database=self.database,
@@ -279,7 +376,7 @@ class PluginManager:
             name=manifest.name,
             version=manifest.version,
             type=manifest.type,
-            enabled=plugin_name in self.instances,
+            enabled=self.is_plugin_enabled(plugin_name),
             last_run=last_run_time,
             last_run_status=last_run_status,
             next_run=next_run,

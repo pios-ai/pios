@@ -89,6 +89,26 @@ async def run_plugin(
     )
 
 
+@router.post("/{plugin_name}/enable")
+async def enable_plugin(plugin_name: str, plugin_manager=Depends(get_plugin_manager)):
+    """Enable a plugin."""
+    if not plugin_manager:
+        raise HTTPException(status_code=500, detail="Plugin manager not available")
+    if not plugin_manager.enable_plugin(plugin_name):
+        raise HTTPException(status_code=404, detail=f"Plugin {plugin_name} not found")
+    return {"status": "enabled", "plugin_name": plugin_name}
+
+
+@router.post("/{plugin_name}/disable")
+async def disable_plugin(plugin_name: str, plugin_manager=Depends(get_plugin_manager)):
+    """Disable a plugin."""
+    if not plugin_manager:
+        raise HTTPException(status_code=500, detail="Plugin manager not available")
+    if not plugin_manager.disable_plugin(plugin_name):
+        raise HTTPException(status_code=404, detail=f"Plugin {plugin_name} not found")
+    return {"status": "disabled", "plugin_name": plugin_name}
+
+
 @router.post("/{plugin_name}/reload")
 async def reload_plugin(plugin_name: str, plugin_manager=Depends(get_plugin_manager)):
     """Reload a plugin."""

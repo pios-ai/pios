@@ -20,7 +20,7 @@ dev:
 	@echo "Starting PiOS dev environment (Ctrl+C to stop both)..."
 	@( \
 		PYTHONPATH=$(PROJECT_ROOT)/backend python -m uvicorn pios.main:app \
-			--reload --host 0.0.0.0 --port 8000 & \
+			--reload --host 0.0.0.0 --port 9100 & \
 		BE_PID=$$!; \
 		(cd $(PROJECT_ROOT)/frontend && npm run dev) & \
 		FE_PID=$$!; \
@@ -30,7 +30,7 @@ dev:
 
 backend:
 	PYTHONPATH=$(PROJECT_ROOT)/backend python -m uvicorn pios.main:app \
-		--reload --host 0.0.0.0 --port 8000
+		--reload --host 0.0.0.0 --port 9100
 
 frontend:
 	cd frontend && npm run dev

@@ -121,6 +121,18 @@ class Database:
             """
         )
 
+        # Plugin configs table for enable/disable and user config overrides
+        self.execute(
+            """
+            CREATE TABLE IF NOT EXISTS plugin_configs (
+                plugin_name TEXT PRIMARY KEY,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                config_overrides TEXT,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
         # Create indices
         self.execute("CREATE INDEX IF NOT EXISTS idx_documents_source ON documents(source)")
         self.execute("CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(type)")
@@ -214,6 +226,9 @@ class Database:
         self,
         source: Optional[str] = None,
         doc_type: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        tags: Optional[List[str]] = None,
         limit: int = 100,
         offset: int = 0,
     ) -> List[Dict[str, Any]]:
@@ -222,6 +237,9 @@ class Database:
         Args:
             source: Filter by source plugin
             doc_type: Filter by document type
+            date_from: Filter by date >= (ISO format YYYY-MM-DD)
+            date_to: Filter by date <= (ISO format YYYY-MM-DD)
+            tags: Filter by tags (any match)
             limit: Maximum results to return
             offset: Offset for pagination
 
@@ -237,12 +255,74 @@ class Database:
         if doc_type:
             query += " AND type = ?"
             params.append(doc_type)
+        if date_from:
+            query += " AND date >= ?"
+            params.append(date_from)
+        if date_to:
+            query += " AND date <= ?"
+            params.append(date_to)
+        if tags:
+            tag_conditions = " OR ".join(["tags LIKE ?" for _ in tags])
+            query += f" AND ({tag_conditions})"
+            params.extend([f"%{tag}%" for tag in tags])
 
-        query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        query += " ORDER BY date DESC, created_at DESC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
 
         cursor = self.execute(query, tuple(params))
         return [dict(row) for row in cursor.fetchall()]
+
+    def get_plugin_config(self, plugin_name: str) -> Optional[Dict[str, Any]]:
+        """Get plugin config (enabled state + overrides).
+
+        Args:
+            plugin_name: Name of the plugin
+
+        Returns:
+            Plugin config dict or None
+        """
+        cursor = self.execute(
+            "SELECT * FROM plugin_configs WHERE plugin_name = ?",
+            (plugin_name,),
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def set_plugin_enabled(self, plugin_name: str, enabled: bool) -> None:
+        """Enable or disable a plugin.
+
+        Args:
+            plugin_name: Name of the plugin
+            enabled: Whether the plugin should be enabled
+        """
+        now = datetime.utcnow().isoformat()
+        self.execute(
+            """
+            INSERT INTO plugin_configs (plugin_name, enabled, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(plugin_name) DO UPDATE SET enabled = ?, updated_at = ?
+            """,
+            (plugin_name, int(enabled), now, int(enabled), now),
+        )
+        self.commit()
+
+    def set_plugin_config_overrides(self, plugin_name: str, config_json: str) -> None:
+        """Store user config overrides for a plugin.
+
+        Args:
+            plugin_name: Name of the plugin
+            config_json: JSON-encoded config overrides
+        """
+        now = datetime.utcnow().isoformat()
+        self.execute(
+            """
+            INSERT INTO plugin_configs (plugin_name, enabled, config_overrides, updated_at)
+            VALUES (?, 1, ?, ?)
+            ON CONFLICT(plugin_name) DO UPDATE SET config_overrides = ?, updated_at = ?
+            """,
+            (plugin_name, config_json, now, config_json, now),
+        )
+        self.commit()
 
     def get_plugin_runs(
         self,

@@ -73,22 +73,21 @@ class Document:
             "",
         ]
 
-        # Add title as heading if available
-        if self.title:
-            markdown_lines.append(f"# {self.title}\n")
-
         # Add content
+        body = ""
         if isinstance(self.content, dict):
             if "text" in self.content:
-                markdown_lines.append(self.content["text"])
+                body = self.content["text"]
             else:
-                # Format content dict as YAML
-                markdown_lines.append("```")
-                markdown_lines.append(json.dumps(self.content, indent=2))
-                markdown_lines.append("```")
+                body = "```json\n" + json.dumps(self.content, indent=2) + "\n```"
         else:
-            markdown_lines.append(str(self.content))
+            body = str(self.content)
 
+        # Add title heading only if body doesn't already start with one
+        if self.title and not body.lstrip().startswith("#"):
+            markdown_lines.append(f"# {self.title}\n")
+
+        markdown_lines.append(body)
         return "\n".join(markdown_lines)
 
     @classmethod

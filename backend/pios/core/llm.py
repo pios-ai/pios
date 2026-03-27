@@ -1,7 +1,7 @@
 """LiteLLM wrapper for unified LLM interface."""
 
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,7 @@ class LLMClient:
         base_url: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2000,
+        fallback_models: Optional[List[str]] = None,
     ):
         """Initialize LLM client.
 
@@ -27,6 +28,7 @@ class LLMClient:
             base_url: Optional custom base URL
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
+            fallback_models: Ordered list of fallback model names (litellm format) if primary fails
         """
         self.provider = provider
         self.model = model
@@ -34,6 +36,12 @@ class LLMClient:
         self.base_url = base_url
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.fallback_models: List[str] = fallback_models or []
+
+        # Token usage tracking
+        self.total_prompt_tokens: int = 0
+        self.total_completion_tokens: int = 0
+        self.total_calls: int = 0
 
         # Import litellm only when needed
         try:
@@ -73,25 +81,45 @@ class LLMClient:
         temp = temperature if temperature is not None else self.temperature
         tokens = max_tokens if max_tokens is not None else self.max_tokens
 
-        try:
-            model_name = f"{self.provider}/{self.model}"
-            if self.provider == "openai":
-                model_name = self.model
-            elif self.provider == "anthropic":
-                model_name = f"claude-{self.model}" if not self.model.startswith("claude") else self.model
+        primary_model = self._resolve_model_name(self.provider, self.model)
+        models_to_try = [primary_model] + self.fallback_models
+        last_error: Optional[Exception] = None
 
-            response = self.litellm.completion(
-                model=model_name,
-                messages=messages,
-                temperature=temp,
-                max_tokens=tokens,
-                **kwargs,
-            )
+        for model_name in models_to_try:
+            try:
+                response = self.litellm.completion(
+                    model=model_name,
+                    messages=messages,
+                    temperature=temp,
+                    max_tokens=tokens,
+                    **kwargs,
+                )
+                # Track token usage
+                self.total_calls += 1
+                usage = getattr(response, "usage", None)
+                if usage:
+                    self.total_prompt_tokens += getattr(usage, "prompt_tokens", 0) or 0
+                    self.total_completion_tokens += getattr(usage, "completion_tokens", 0) or 0
 
-            return response.choices[0].message.content
-        except Exception as e:
-            logger.error(f"Error calling LLM: {e}")
-            raise
+                if model_name != primary_model:
+                    logger.info(f"Used fallback model {model_name} (primary {primary_model} failed)")
+                return response.choices[0].message.content
+            except Exception as e:
+                last_error = e
+                logger.warning(f"Model {model_name} failed: {e}")
+                continue
+
+        logger.error(f"All models failed. Last error: {last_error}")
+        raise last_error
+
+    @staticmethod
+    def _resolve_model_name(provider: str, model: str) -> str:
+        """Resolve provider+model to a litellm model string."""
+        if provider == "openai":
+            return model
+        if provider == "anthropic":
+            return f"claude-{model}" if not model.startswith("claude") else model
+        return f"{provider}/{model}"
 
     def extract_json(
         self,
@@ -169,3 +197,22 @@ class LLMClient:
             True if LLM can be used
         """
         return self.litellm is not None and self.api_key != ""
+
+    def get_usage(self) -> Dict[str, Any]:
+        """Return cumulative token usage stats.
+
+        Returns:
+            Dictionary with prompt_tokens, completion_tokens, total_tokens, and calls
+        """
+        return {
+            "prompt_tokens": self.total_prompt_tokens,
+            "completion_tokens": self.total_completion_tokens,
+            "total_tokens": self.total_prompt_tokens + self.total_completion_tokens,
+            "calls": self.total_calls,
+        }
+
+    def reset_usage(self) -> None:
+        """Reset token usage counters."""
+        self.total_prompt_tokens = 0
+        self.total_completion_tokens = 0
+        self.total_calls = 0
