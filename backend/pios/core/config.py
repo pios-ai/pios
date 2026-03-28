@@ -63,6 +63,8 @@ class PiOSConfig(BaseModel):
     plugin_dirs: List[str] = Field(
         default=["~/.pios/plugins", "./plugins"],
     )
+    # Per-plugin config overrides: {plugin_name: {key: value}}
+    plugin_configs: Dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def expand_plugin_dirs(self) -> "PiOSConfig":
@@ -84,7 +86,7 @@ class PiOSConfig(BaseModel):
             import re
             def replace_env(match):
                 env_var = match.group(1)
-                default = match.group(3) if match.group(3) else ""
+                default = match.group(2) if match.group(2) else ""
                 return os.getenv(env_var, default)
             return re.sub(r"\$\{([^}:]+)(?::([^}]+))?\}", replace_env, obj)
         return obj

@@ -1,30 +1,33 @@
 name: source-wechat
-version: 0.1.0
+version: 0.2.0
 type: source
-description: Fetches messages and moments from WeChat
+description: Extracts WeChat daily messages from decrypted SQLite databases and generates a daily digest
 author: PiOS Contributors
 license: MIT
 
 config_schema:
-  wechat_api_key:
+  decrypted_db_dir:
     type: string
-    description: WeChat API key
-  sync_messages:
-    type: boolean
-    default: true
-    description: Sync messages
-  sync_moments:
-    type: boolean
-    default: true
-    description: Sync moments (Moments feed)
+    default: ""
+    description: Path to already-decrypted WeChat DB directory (contains contact/ and message/ subdirs)
+  encrypted_db_dir:
+    type: string
+    default: ""
+    description: Path to encrypted WeChat backup DB directory (used with keys_file to auto-decrypt)
+  keys_file:
+    type: string
+    default: ""
+    description: Path to all_keys.json for decryption (only needed if encrypted_db_dir is set)
+  my_wxid:
+    type: string
+    default: "q7914079"
+    description: Your WeChat user ID (wxid)
+  days_back:
+    type: integer
+    default: 1
+    description: How many recent days to process (1 = yesterday only)
 
-schedule: "*/15 * * * *"  # Every 15 minutes
+schedule: "0 9 * * *"  # Daily at 9 AM
 
 outputs:
-  - message
-  - moment
-  - contact
-
-permissions:
-  - read:wechat
-  - read:messages
+  - wechat-daily

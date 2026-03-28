@@ -58,6 +58,7 @@ async def lifespan(app: FastAPI):
         document_store=deps._document_store,
         scheduler=deps._scheduler,
         llm=deps._llm,
+        plugin_configs=deps._config.plugin_configs,
     )
 
     # Discover and load plugins

@@ -1,28 +1,37 @@
 name: source-apple-health
-version: 0.1.0
+version: 0.2.0
 type: source
-description: Fetches health and fitness data from Apple Health
+description: Reads Apple Health Auto Export CSV files and produces a daily health digest
 author: PiOS Contributors
 license: MIT
 
 config_schema:
-  health_kit_token:
+  export_dir:
     type: string
-    description: Health Kit API token
-  sync_days:
+    default: "~/Downloads"
+    description: Directory containing HealthAutoExport-*.csv files
+  my_name:
+    type: string
+    default: "Abe"
+    description: Your name (used in the digest heading)
+  days_back:
     type: integer
-    default: 7
-    description: Number of days to sync back
+    default: 1
+    description: How many recent days to process (1 = yesterday only)
+  anomaly_steps_min:
+    type: integer
+    default: 3000
+    description: Minimum daily steps before an anomaly alert is raised
+  anomaly_blood_oxygen_min:
+    type: number
+    default: 93.0
+    description: Minimum blood oxygen saturation % before an anomaly alert
+  anomaly_resting_hr_max:
+    type: integer
+    default: 100
+    description: Maximum resting heart rate before an anomaly alert
 
-schedule: "0 6 * * *"  # Daily at 6 AM
+schedule: "0 7 * * *"  # Daily at 7 AM
 
 outputs:
-  - heart_rate
-  - steps
-  - sleep
-  - workout
-  - nutrition
-
-permissions:
-  - read:health
-  - read:fitness
+  - health-daily

@@ -1,24 +1,25 @@
 name: source-chatgpt
-version: 0.1.0
+version: 0.2.0
 type: source
-description: Fetches conversation history from ChatGPT/OpenAI
+description: Parses ChatGPT export JSON and generates a daily conversation digest
 author: PiOS Contributors
 license: MIT
 
 config_schema:
-  openai_api_key:
+  export_file:
     type: string
-    description: OpenAI API key
-  fetch_conversations:
+    default: ""
+    description: Path to conversations.json from ChatGPT data export (Settings → Data Controls → Export)
+  days_back:
+    type: integer
+    default: 1
+    description: How many recent days to process (1 = yesterday only)
+  include_claude:
     type: boolean
     default: true
-    description: Fetch conversation history
+    description: Also scan for Claude conversation export files in the same directory
 
-schedule: "0 2 * * *"  # Daily at 2 AM
+schedule: "0 3 * * *"  # Daily at 3 AM
 
 outputs:
-  - conversation
-  - analysis
-
-permissions:
-  - read:openai
+  - chatgpt-daily

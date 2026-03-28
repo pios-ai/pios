@@ -26,6 +26,7 @@ class PluginManager:
         document_store: Any,
         scheduler: Any,
         llm: Any,
+        plugin_configs: Optional[Dict[str, Any]] = None,
     ):
         """Initialize plugin manager.
 
@@ -35,12 +36,14 @@ class PluginManager:
             document_store: DocumentStore instance
             scheduler: PiOSScheduler instance
             llm: LLMClient instance
+            plugin_configs: Per-plugin config overrides from config.yaml
         """
         self.plugin_dirs = [Path(d) for d in plugin_dirs]
         self.database = database
         self.document_store = document_store
         self.scheduler = scheduler
         self.llm = llm
+        self.plugin_configs: Dict[str, Any] = plugin_configs or {}
         self.runtime = PluginRuntime()
 
         self.plugins: Dict[str, Any] = {}
@@ -238,13 +241,21 @@ class PluginManager:
                 logger.error(f"Could not find plugin class in {plugin_name}")
                 return None
 
-            # Build config: start from schema defaults, then overlay DB overrides
+            # Build config: schema defaults → config.yaml plugin_configs → DB overrides
             plugin_config: Dict[str, Any] = {}
             for key, schema_val in manifest.config_schema.items():
                 if isinstance(schema_val, dict) and "default" in schema_val:
                     plugin_config[key] = schema_val["default"]
 
-            # Apply user overrides from DB if any
+            # Apply config.yaml per-plugin overrides (expand ~ in string values)
+            yaml_overrides = self.plugin_configs.get(plugin_name, {})
+            for k, v in yaml_overrides.items():
+                if isinstance(v, str) and v.startswith("~"):
+                    import os as _os
+                    v = _os.path.expanduser(v)
+                plugin_config[k] = v
+
+            # Apply user overrides from DB if any (highest priority)
             if self.database:
                 import json as _json
                 db_cfg = self.database.get_plugin_config(plugin_name)
