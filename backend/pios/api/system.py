@@ -3,7 +3,7 @@
 from typing import Dict, Any
 from fastapi import APIRouter, Depends
 
-from ..deps import get_config, get_database, get_scheduler, get_plugin_manager
+from ..deps import get_config, get_database, get_scheduler, get_plugin_manager, get_llm
 
 router = APIRouter(prefix="/api/system", tags=["system"])
 
@@ -14,6 +14,7 @@ async def get_system_status(
     database=Depends(get_database),
     scheduler=Depends(get_scheduler),
     plugin_manager=Depends(get_plugin_manager),
+    llm=Depends(get_llm),
 ) -> Dict[str, Any]:
     """Get overall system status."""
     db_status = "disconnected"
@@ -25,12 +26,25 @@ async def get_system_status(
             db_status = f"error: {str(e)}"
 
     scheduler_status = "stopped"
+    job_count = 0
     if scheduler:
         scheduler_status = "running" if scheduler.is_running() else "stopped"
+        try:
+            job_count = len(scheduler.scheduler.get_jobs())
+        except Exception:
+            pass
 
     plugins_loaded = 0
     if plugin_manager:
         plugins_loaded = len(plugin_manager.instances)
+
+    llm_info = {}
+    if config:
+        llm_info = {
+            "provider": config.llm.provider,
+            "model": config.llm.model,
+            "available": llm.is_available() if llm else False,
+        }
 
     return {
         "app_name": config.app_name if config else "PiOS",
@@ -42,10 +56,12 @@ async def get_system_status(
         "scheduler": {
             "status": scheduler_status,
             "enabled": scheduler.enabled if scheduler else False,
+            "jobs": job_count,
         },
         "plugins": {
             "loaded": plugins_loaded,
         },
+        "llm": llm_info,
     }
 
 

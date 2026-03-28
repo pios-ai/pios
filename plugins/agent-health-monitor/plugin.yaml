@@ -1,7 +1,7 @@
 name: agent-health-monitor
-version: 0.1.0
+version: 0.2.0
 type: agent
-description: Monitors health metrics and generates alerts
+description: Parses Apple Health documents, detects anomalies, writes health analysis reports
 author: PiOS Contributors
 license: MIT
 
@@ -9,20 +9,19 @@ config_schema:
   alert_threshold_steps:
     type: integer
     default: 5000
-    description: Daily steps alert threshold
-  alert_threshold_sleep:
-    type: integer
-    default: 6
-    description: Minimum sleep hours threshold
-  check_interval_hours:
-    type: integer
-    default: 6
-    description: How often to check metrics
+    description: "Min daily steps — alert if below this value"
+  alert_threshold_bo:
+    type: number
+    default: 93.0
+    description: "Min blood oxygen % — alert if below this value"
+  alert_threshold_hr_max:
+    type: number
+    default: 100.0
+    description: "Max avg heart rate bpm — alert if above this value"
 
 schedule: "0 */6 * * *"  # Every 6 hours
 
 outputs:
-  - health-alert
   - health-analysis
 
 permissions:
