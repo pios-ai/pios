@@ -36,7 +36,7 @@ frontend:
 	cd frontend && npm run dev
 
 test:
-	cd backend && pytest tests/ -v
+	cd backend && python -m pytest tests/ -v
 
 clean:
 	find . -type f -name "*.pyc" -delete
