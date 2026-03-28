@@ -2,8 +2,11 @@
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from .core.config import PiOSConfig
 from .core.database import Database
@@ -103,8 +106,13 @@ app.include_router(documents.router)
 app.include_router(scheduler.router)
 
 
-@app.get("/")
+@app.get("/", include_in_schema=False)
 async def root():
+    # In Docker/production the static dir exists — serve the SPA.
+    # In development (no static dir) return the API info JSON.
+    _static = Path(__file__).parent.parent.parent / "static"
+    if (_static / "index.html").exists():
+        return FileResponse(str(_static / "index.html"))
     return {
         "app": "PiOS",
         "version": "0.1.0",
@@ -112,6 +120,20 @@ async def root():
     }
 
 
+# Mount compiled frontend assets when running in Docker / production.
+# The StaticFiles mount must come AFTER all API routes so that /api/* routes
+# are handled by the routers, not the static file handler.
+_static_dir = Path(__file__).parent.parent.parent / "static"
+if _static_dir.exists():
+    if (_static_dir / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=str(_static_dir / "assets")), name="assets")
+
+    @app.get("/{_path:path}", include_in_schema=False)
+    async def _spa_catchall(_path: str):
+        """Return index.html for all non-API routes (SPA client-side routing)."""
+        return FileResponse(str(_static_dir / "index.html"))
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=9100)

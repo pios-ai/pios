@@ -1,27 +1,43 @@
+# ── Stage 1: Build React frontend ──────────────────────────────────────────────
+FROM node:18-slim AS frontend-builder
+
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci --silent
+COPY frontend/ ./
+RUN npm run build
+# Output: /app/frontend/dist/
+
+# ── Stage 2: Python backend + bundled frontend ─────────────────────────────────
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
+# System dependencies (gcc for some Python packages)
+RUN apt-get update && apt-get install -y --no-install-recommends gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend code
+# Install Python backend
 COPY backend/ ./backend/
+RUN pip install --no-cache-dir -e ./backend/
 
-# Install Python dependencies
-RUN cd backend && pip install --no-cache-dir -r requirements.txt
+# Copy compiled frontend into /app/static/ — FastAPI serves it from there
+COPY --from=frontend-builder /app/frontend/dist ./static/
 
-# Create config and data directories
-RUN mkdir -p ~/.pios && mkdir -p /app/data
-
-# Expose port
-EXPOSE 8000
-
-# Set environment variables
+# Runtime config
 ENV PYTHONUNBUFFERED=1
-ENV PIOS_HOME=/app/data
+ENV PYTHONPATH=/app/backend
 
-# Run the application
-CMD ["python", "-m", "uvicorn", "pios.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# PiOS stores user data in /data (mount a volume here)
+RUN mkdir -p /data/.pios/plugins /data/.pios/vault
+
+EXPOSE 9100
+
+# Health check — waits up to 30 s for the API to respond
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:9100/api/system/health')" \
+    || exit 1
+
+CMD ["python", "-m", "uvicorn", "pios.main:app", \
+     "--host", "0.0.0.0", "--port", "9100", \
+     "--workers", "1", "--log-level", "info"]

@@ -19,12 +19,11 @@ def test_config_defaults():
 
 
 def test_config_env_interpolation():
-    """Test environment variable interpolation."""
+    """Test environment variable interpolation (must be passed as raw dict, not Pydantic model)."""
     os.environ["TEST_API_KEY"] = "test-key-123"
 
-    config = PiOSConfig(
-        llm=LLMConfig(api_key="${TEST_API_KEY}")
-    )
+    # Interpolation works on raw dicts (as loaded from YAML), not pre-built Pydantic models
+    config = PiOSConfig(llm={"provider": "openai", "api_key": "${TEST_API_KEY}"})
 
     assert config.llm.api_key == "test-key-123"
 
