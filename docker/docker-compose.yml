@@ -1,0 +1,54 @@
+version: '3.8'
+
+# PiOS — Personal Intelligence OS
+# Single-container deployment: backend API + compiled React frontend on port 9100.
+# Optional: add the `ollama` profile for local LLM support.
+#
+# Quick start:
+#   cp docker/.env.example .env   # then fill in your API keys
+#   docker compose up -d
+#   open http://localhost:9100
+
+services:
+  pios:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: pios
+    ports:
+      - "${PIOS_PORT:-9100}:9100"
+    env_file:
+      - ../.env
+    environment:
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      # Persistent user data: DB, vault, plugins, config
+      - pios-data:/data/.pios
+      # Optional: mount your local plugin directory
+      # - ~/.pios/plugins:/data/.pios/plugins
+      # Optional: mount your Apple Health / WeChat export directories
+      # - ~/Downloads:/mnt/downloads:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:9100/api/system/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ── Optional: local LLM via Ollama ──────────────────────────────────────────
+  # Enable with: docker compose --profile ollama up -d
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pios-ollama
+    profiles: ["ollama"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  pios-data:
+  ollama-models:

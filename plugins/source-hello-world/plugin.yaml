@@ -1,0 +1,17 @@
+name: source-hello-world
+version: 0.1.0
+type: source
+description: Hello World plugin — verifies the plugin framework works end-to-end
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  message:
+    type: string
+    default: "Hello from PiOS!"
+    description: The greeting message to include in the document
+
+outputs:
+  - hello-world
+
+# No schedule — run manually via API or CLI

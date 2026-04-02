@@ -1,0 +1,29 @@
+name: agent-health-monitor
+version: 0.2.0
+type: agent
+description: Parses Apple Health documents, detects anomalies, writes health analysis reports
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  alert_threshold_steps:
+    type: integer
+    default: 5000
+    description: "Min daily steps — alert if below this value"
+  alert_threshold_bo:
+    type: number
+    default: 93.0
+    description: "Min blood oxygen % — alert if below this value"
+  alert_threshold_hr_max:
+    type: number
+    default: 100.0
+    description: "Max avg heart rate bpm — alert if above this value"
+
+schedule: "0 */6 * * *"  # Every 6 hours
+
+outputs:
+  - health-analysis
+
+permissions:
+  - read:documents
+  - write:documents

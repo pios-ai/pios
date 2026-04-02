@@ -1,0 +1,25 @@
+name: source-immich
+version: 0.2.0
+type: source
+description: Fetches daily photos from Immich and generates a photo diary
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  immich_url:
+    type: string
+    default: "http://localhost:2283"
+    description: Immich server base URL
+  immich_api_key:
+    type: string
+    default: ""
+    description: Immich API key (x-api-key header)
+  days_back:
+    type: integer
+    default: 1
+    description: How many recent days to process (1 = yesterday only)
+
+schedule: "0 8 * * *"  # Daily at 8 AM
+
+outputs:
+  - photo-daily

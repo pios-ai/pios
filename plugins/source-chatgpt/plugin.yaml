@@ -1,0 +1,25 @@
+name: source-chatgpt
+version: 0.2.0
+type: source
+description: Parses ChatGPT export JSON and generates a daily conversation digest
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  export_file:
+    type: string
+    default: ""
+    description: Path to conversations.json from ChatGPT data export (Settings → Data Controls → Export)
+  days_back:
+    type: integer
+    default: 1
+    description: How many recent days to process (1 = yesterday only)
+  include_claude:
+    type: boolean
+    default: true
+    description: Also scan for Claude conversation export files in the same directory
+
+schedule: "0 3 * * *"  # Daily at 3 AM
+
+outputs:
+  - chatgpt-daily

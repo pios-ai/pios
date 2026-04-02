@@ -1,0 +1,21 @@
+name: agent-daily-digest
+version: 0.2.0
+type: agent
+description: Fuses all of yesterday's source documents into one Chinese daily digest using LLM
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  days_offset:
+    type: integer
+    default: 1
+    description: "How many days back to generate digest for (1 = yesterday)"
+
+schedule: "0 22 * * *"  # Daily at 22:00 (after all source plugins have run)
+
+outputs:
+  - daily-digest
+
+permissions:
+  - read:documents
+  - write:documents

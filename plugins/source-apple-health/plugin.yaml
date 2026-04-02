@@ -1,0 +1,37 @@
+name: source-apple-health
+version: 0.2.0
+type: source
+description: Reads Apple Health Auto Export CSV files and produces a daily health digest
+author: PiOS Contributors
+license: MIT
+
+config_schema:
+  export_dir:
+    type: string
+    default: "~/Downloads"
+    description: Directory containing HealthAutoExport-*.csv files
+  my_name:
+    type: string
+    default: "Abe"
+    description: Your name (used in the digest heading)
+  days_back:
+    type: integer
+    default: 1
+    description: How many recent days to process (1 = yesterday only)
+  anomaly_steps_min:
+    type: integer
+    default: 3000
+    description: Minimum daily steps before an anomaly alert is raised
+  anomaly_blood_oxygen_min:
+    type: number
+    default: 93.0
+    description: Minimum blood oxygen saturation % before an anomaly alert
+  anomaly_resting_hr_max:
+    type: integer
+    default: 100
+    description: Maximum resting heart rate before an anomaly alert
+
+schedule: "0 7 * * *"  # Daily at 7 AM
+
+outputs:
+  - health-daily
