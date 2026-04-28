@@ -1,0 +1,60 @@
+#!/bin/bash
+# Pre-commit hook: 如果本次 commit 触及 chitchat / greet / pi-route / presence / pi-pulse，
+# 自动跑 P6 smoke test 防倒退。
+#
+
+
+
+#
+# 启用：git config core.hooksPath .githooks（见 .githooks/README.md）
+# 绕过：git commit --no-verify（不推荐；紧急时用，记得事后补测）
+
+set -e
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+
+# 哪些文件改动会触发 smoke test
+TRIGGERS=(
+  "backend/pi-chitchat.js"
+  "backend/pi-greet.js"
+  "backend/pi-route.js"
+  "backend/presence.js"
+  "backend/pi-pulse.js"
+  "main.js"
+  "test/p6-smoke-test.js"
+)
+
+SHOULD_RUN=0
+MATCHED=""
+for f in "${TRIGGERS[@]}"; do
+  if echo "$STAGED" | grep -qE "^${f}$"; then
+    SHOULD_RUN=1
+    MATCHED="$MATCHED $f"
+  fi
+done
+
+if [ "$SHOULD_RUN" -eq 0 ]; then
+  exit 0
+fi
+
+echo "[pre-commit] staged 改动触发 P6 smoke test:$MATCHED"
+echo ""
+
+if [ ! -f test/p6-smoke-test.js ]; then
+  echo "⚠️  test/p6-smoke-test.js 不存在，跳过（但提示检查）"
+  exit 0
+fi
+
+# 跑 smoke test
+if ! node test/p6-smoke-test.js; then
+  echo ""
+  echo "❌ P6 smoke test 失败 → 阻止 commit"
+  echo ""
+  echo "修好代码让测试绿再 commit。"
+  echo "紧急绕过（不推荐）：git commit --no-verify"
+  exit 1
+fi
+
+echo ""
+echo "✅ P6 smoke test 全绿，允许 commit 继续"
+exit 0

@@ -1,0 +1,47 @@
+# WeChat Pipeline plugin
+#
+# 本插件需要"激活"才真正能跑——PiOS 先把插件文件落到 vault，
+# 激活由一条 AI 引导会话完成（用户点 Plugins → WeChat → "激活 WeChat Pipeline"）。
+# 激活会话结束后，AI 会：
+#   1. 把扫到的 AES key 写进 ~/.pios/wechat/keys.json
+#   2. 把 wxid / live DB 路径 / 媒体目录写进 ~/.pios/wechat/config.json
+#   3. 在 pios.yaml 里把 daily-wechat-digest.enabled 翻成 true
+
+id: wechat
+name: WeChat 聊天摘要
+category: messaging
+description: 每日抓取 WeChat 私聊消息 + 生成摘要（支持媒体文件链接）
+
+# 激活：点 Plugins UI 按钮开一个带这个 prompt 的 Talk 会话
+activation:
+  prompt: prompts/activate.md
+  runtimes:
+    - claude-cli
+    - codex-cli
+  allowed_tools: 'Read,Write,Edit,Bash,Glob,Grep'
+  # 成功标志：config.json 写好 + 任务启用
+  success_marker:
+    - '{pios_home}/wechat/keys.json'
+    - '{pios_home}/wechat/config.json'
+
+# daily 抓取 task（装完未激活时 enabled:false；激活会话结束改 true）
+tasks:
+  daily-wechat-digest:
+    prompt: tasks/daily.md
+    trigger:
+      cron: '7 0 * * *'
+    runtimes:
+      - claude-cli
+      - codex-cli
+    enabled: false
+
+# 系统前置（activate.md 里 AI 会逐条检查）
+requirements:
+  - label: WeChat.app 已安装
+    check: test -d /Applications/WeChat.app
+  - label: WeChat 正在运行且已登录
+    check: pgrep -f WeChat.app/Contents/MacOS/WeChat
+  - label: PiOS 有"完全磁盘访问"权限
+    check: test -r ~/Library/Containers/com.tencent.xinWeChat
+  - label: PyCryptodome + cryptography 已装
+    check: python3 -c 'import Crypto, cryptography' 2>/dev/null

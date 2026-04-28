@@ -1,0 +1,60 @@
+# Afterward Actions Schema (v1)
+# 一次性投递 — daemon 确认死亡后按 when 顺序执行，执行完闭环
+#
+# 4 元组：what / to / via / when
+
+version: 1
+
+actions:
+  # 立即投递私密信件
+  - id: letter-to-spouse
+    what: vault/letters/spouse.md.enc
+    to: recipient-spouse        # 在 trustees.yaml 定义 contact
+    via: lawyer-hand-delivery   # 在 channels.yaml 定义
+    when: immediate
+    note: 送到手上，不要走邮件
+
+  # 延迟 30 天投递（给对方消化死讯的时间）
+  - id: letter-to-partner
+    what: vault/letters/partner.md.enc
+    to: recipient-partner
+    via: private-email
+    when: +30days
+    note: 私密邮箱，不走法律 channel
+
+  # 时间触发的延迟信件
+  - id: letter-child-18
+    what: vault/letters/child-18yo.md.enc
+    to: recipient-child
+    via: family-guardian         # 由监护人转交
+    when: 2044-06-15              # 孩子 18 岁生日
+    note: 监护人当天代我给他这封信
+
+  # 资产交接
+  - id: asset-handover-company
+    what: vault/assets/company-handover.md.enc
+    to: recipient-cofounder
+    via: lawyer-legal-channel
+    when: immediate
+    note: 附股权转让书 + 公司密码
+
+  # 系统交接（给 PiOS 继承人）
+  - id: pios-inheritance
+    what: vault/briefs/pios-handover.md.enc
+    to: recipient-tech-successor
+    via: github-private-repo
+    when: +7days
+    note: 包含所有 admin 凭据 + 架构说明
+
+  # 通知 Pi Foundation board
+  - id: notify-pi-foundation
+    what: vault/briefs/pi-foundation-charter.md.enc
+    to: pi-foundation-board
+    via: foundation-mailing-list
+    when: immediate
+    note: 激活 Pi Foundation，开始 Pi 永久运营
+
+# 配套文件（daemon 会读）：
+#   trustees.yaml  — 5 位 trustee 的联系方式 + Shamir share 状态
+#   contacts.yaml  — recipient-id → 姓名/联系方式/备注（加密）
+#   channels.yaml  — channel-id → 实际投递方式（lawyer / email / physical / etc.）

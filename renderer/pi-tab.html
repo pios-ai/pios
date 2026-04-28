@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Pi</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#141414;--bg2:#1c1c1c;--bg3:#252525;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text:#e8eaed;--muted:#9aa0a6;--dim:#5f6368;
+  --blue:#4a9eff;--blue2:#1a5fb4;--orange:#ff8c42;--orange2:#c96a00;
+  --green:#3fb950;--warn:#d29922;
+  --radius:6px;--fs:13px;--fs-sm:11px;--fs-xs:10px
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
+  font-size:var(--fs);line-height:1.6;overflow-x:hidden}
+body{padding:0 0 40px 0}
+
+/* header */
+#header{ display:none }
+#header h1{font-size:15px;font-weight:600;letter-spacing:0.02em;color:var(--blue)}
+#header .hd-right{display:flex;gap:8px;align-items:center}
+#refresh-btn{
+  background:none;border:1px solid var(--border2);color:var(--muted);
+  padding:3px 9px;border-radius:var(--radius);cursor:pointer;font-size:12px
+}
+#refresh-btn:hover{border-color:var(--blue);color:var(--blue)}
+#status-dot{width:7px;height:7px;border-radius:50%;background:var(--dim)}
+#status-dot.ok{background:var(--blue)}
+#status-dot.err{background:var(--orange)}
+
+/* ── Pi 子 tab bar ── */
+.pi-subtab-bar{
+  display:flex;gap:2px;padding:8px 14px;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:9;background:var(--bg)
+}
+.pi-subtab-btn{
+  padding:5px 13px;border:none;border-radius:6px;
+  background:transparent;color:var(--muted);
+  font-size:12px;font-weight:400;cursor:pointer;
+  font-family:inherit;transition:all 0.15s;white-space:nowrap
+}
+.pi-subtab-btn.active{background:rgba(74,158,255,0.18);color:var(--blue);font-weight:600}
+.pi-subtab-btn:hover:not(.active){background:rgba(255,255,255,0.04);color:var(--text)}
+.pi-pane{display:none}
+.pi-pane.active{display:block}
+
+/* sections */
+.sec{border-bottom:1px solid var(--border);padding:12px 16px}
+.sec-head{
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;user-select:none
+}
+.sec-head .sec-title{
+  font-size:var(--fs-sm);font-weight:600;text-transform:uppercase;
+  letter-spacing:0.06em;color:var(--muted)
+}
+.sec-head .sec-toggle{font-size:10px;color:var(--dim);transition:transform 0.15s}
+.sec-head.open .sec-toggle{transform:rotate(90deg)}
+.sec-body{margin-top:10px;display:none}
+.sec-body.open{display:block}
+
+/* A 当下 */
+#sec-a .sec-body{display:block}
+.now-row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.now-npc{display:flex;flex-direction:column;align-items:center;gap:4px}
+.npc-orb{
+  width:40px;height:40px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#a0c8ff,#3080ff 60%,#1030a0);
+  box-shadow:0 0 12px rgba(74,158,255,0.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px
+}
+.npc-label{font-size:var(--fs-xs);color:var(--muted)}
+.now-soul{flex:1;min-width:0;font-size:12px;color:var(--muted);line-height:1.5}
+.now-soul strong{color:var(--text);display:block;margin-bottom:4px}
+
+/* Presence indicator */
+.presence-row{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:var(--fs-xs)}
+.presence-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.presence-dot.present{background:var(--blue)}
+.presence-dot.away{background:var(--orange)}
+.presence-dot.unknown{background:var(--dim)}
+.presence-label{color:var(--muted)}
+
+
+/* B 身份 */
+.md-wrap{
+  font-size:12px;color:var(--muted);line-height:1.65;
+  max-height:300px;overflow-y:auto;
+  background:var(--bg2);border-radius:var(--radius);padding:10px 12px
+}
+.md-wrap h1,.md-wrap h2,.md-wrap h3{
+  color:var(--text);font-size:13px;margin:10px 0 4px
+}
+.md-wrap h1{font-size:14px}
+.md-wrap p{margin:4px 0}
+.md-wrap code{
+  background:var(--bg3);padding:1px 4px;border-radius:3px;
+  font-family:monospace;font-size:11px;color:var(--blue)
+}
+.md-wrap pre{
+  background:var(--bg3);padding:8px;border-radius:var(--radius);
+  overflow-x:auto;margin:6px 0
+}
+.md-wrap pre code{background:none;padding:0;font-size:11px;color:var(--text)}
+.md-wrap ul,.md-wrap ol{margin:4px 0 4px 16px}
+.md-wrap li{margin:2px 0}
+.md-wrap blockquote{
+  border-left:3px solid var(--blue2);margin:4px 0;padding:2px 8px;
+  color:var(--muted)
+}
+.md-wrap hr{border:none;border-top:1px solid var(--border);margin:8px 0}
+.md-file-tab{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.md-file-btn{
+  background:var(--bg2);border:1px solid var(--border);color:var(--muted);
+  padding:2px 8px;border-radius:3px;cursor:pointer;font-size:11px
+}
+.md-file-btn.active{border-color:var(--blue);color:var(--blue)}
+
+/* C 调度 — 2026-04-19 删除，调度能力已移到 Team › Agents/Tasks/Hosts */
+
+/* D Owner */
+.profile-list{display:flex;flex-direction:column;gap:4px}
+.profile-item{background:var(--bg2);border-radius:var(--radius);overflow:hidden}
+.profile-item-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 10px;cursor:pointer
+}
+.profile-item-name{font-size:12px;color:var(--text);font-weight:500}
+.profile-item-toggle{font-size:10px;color:var(--dim)}
+.profile-item-body{
+  padding:0 10px;max-height:0;overflow:hidden;
+  transition:max-height 0.2s ease,padding 0.2s
+}
+.profile-item-body.open{max-height:500px;padding:8px 10px;overflow-y:auto}
+.profile-missing{font-size:12px;color:var(--dim);padding:4px 0}
+
+/* E 角色（character = skin + 昵称 + voice + 风格） */
+/* 单行横向滚动：激活的排第一，其余向右滑 */
+.char-grid{
+  display:flex;flex-direction:row;gap:8px;
+  overflow-x:auto;padding-bottom:4px;
+  /* 隐藏滚动条但保持可滚动 */
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+.char-grid::-webkit-scrollbar{display:none}
+.char-card{
+  display:flex;flex-direction:column;gap:4px;
+  padding:10px;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--bg2);
+  cursor:pointer;transition:border-color 0.15s,background 0.15s;
+  position:relative;
+  flex-shrink:0;min-width:130px;max-width:160px;
+}
+.char-card:hover{border-color:var(--border2);background:var(--bg3)}
+.char-card.active{border-color:var(--blue);background:rgba(74,158,255,0.08)}
+.char-card.char-add{border-style:dashed;border-color:var(--border2);opacity:0.78}
+.char-card.char-add:hover{border-color:var(--blue);opacity:1;background:rgba(74,158,255,0.06)}
+.char-card.active::after{
+  content:'✓';position:absolute;top:4px;right:6px;
+  color:var(--blue);font-size:11px;font-weight:700
+}
+.char-head{display:flex;align-items:center;gap:8px}
+.char-emoji{font-size:22px;line-height:1;flex-shrink:0}
+.char-thumb{width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.04);border-radius:6px;border:1px solid rgba(255,255,255,0.06)}
+.char-thumb img{width:32px;height:32px;display:block}
+.char-thumb-fallback{font-size:22px;line-height:1}
+.char-name{font-size:12px;color:var(--text);font-weight:600;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.char-nick{font-size:10px;color:var(--dim)}
+.char-meta{display:flex;gap:4px;flex-wrap:wrap;font-size:var(--fs-xs)}
+.char-chip{
+  display:inline-block;padding:1px 5px;border-radius:3px;
+  font-size:var(--fs-xs);font-family:'SF Mono',Menlo,monospace
+}
+.char-chip.voice-ok{background:rgba(63,185,80,0.12);color:#3fb950}
+.char-chip.voice-named{background:rgba(74,158,255,0.08);color:#7fb6ff}
+.char-chip.voice-fallback{background:rgba(95,99,104,0.15);color:var(--muted)}
+.char-style{font-size:var(--fs-xs);color:var(--muted);line-height:1.4;
+  max-height:2.8em;overflow:hidden;display:-webkit-box;
+  -webkit-line-clamp:2;-webkit-box-orient:vertical}
+.char-btn{
+  background:none;border:1px solid var(--border2);color:var(--muted);
+  padding:2px 0;border-radius:3px;cursor:pointer;font-size:var(--fs-xs);
+  font-family:inherit;margin-top:2px
+}
+.char-btn:hover{border-color:var(--blue);color:var(--blue)}
+.char-btn.current{border-color:var(--blue);color:var(--blue);background:rgba(74,158,255,0.06);cursor:default}
+.char-note{
+  font-size:var(--fs-xs);color:var(--dim);margin-top:8px;line-height:1.5;
+  padding:6px 8px;background:var(--bg2);border-radius:3px;
+  border-left:2px solid rgba(74,158,255,0.3)
+}
+
+/* A 区底盘行 */
+.base-row{
+  margin-top:6px;padding:4px 8px;font-size:var(--fs-xs);
+  color:var(--dim);background:var(--bg2);border-radius:3px;
+  border-left:2px solid rgba(74,158,255,0.25);line-height:1.5
+}
+.base-row strong{color:var(--muted);font-weight:600}
+
+/* F 对话历史 */
+.msg-list{display:flex;flex-direction:column;gap:6px}
+.msg-row{display:flex;gap:8px;align-items:flex-start}
+.msg-role{
+  font-size:var(--fs-xs);padding:1px 5px;border-radius:3px;
+  font-weight:600;white-space:nowrap;margin-top:2px
+}
+.msg-role.user{background:rgba(74,158,255,0.15);color:var(--blue)}
+.msg-role.assistant{background:rgba(63,185,80,0.12);color:var(--green)}
+.msg-content{
+  flex:1;font-size:12px;color:var(--muted);line-height:1.5;
+  white-space:pre-wrap;word-break:break-word;
+  max-height:80px;overflow:hidden;position:relative
+}
+.msg-content.expanded{max-height:none}
+.msg-content::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:20px;
+  background:linear-gradient(transparent,var(--bg))
+}
+.msg-content.expanded::after{display:none}
+.msg-ts{font-size:var(--fs-xs);color:var(--dim);white-space:nowrap;margin-top:2px}
+.empty-msg{font-size:12px;color:var(--dim);padding:4px 0}
+
+/* pane subtitle */
+.pane-subtitle{padding:6px 16px 5px;font-size:11px;color:var(--dim);border-bottom:1px solid var(--border)}
+
+/* Owner pane */
+.ow-file-item{background:var(--bg2);border-radius:var(--radius);overflow:hidden;margin-bottom:4px}
+.ow-file-head{display:flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer}
+.ow-file-head:hover{background:rgba(255,255,255,0.03)}
+.ow-file-name{font-size:12px;color:var(--text);font-weight:500;flex:0 0 auto;white-space:nowrap}
+.ow-file-desc{flex:1;font-size:10px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;margin-left:6px}
+.ow-file-meta{font-size:10px;color:var(--dim);white-space:nowrap}
+.ow-file-edit-btn{font-size:11px;padding:1px 6px;border:1px solid var(--border2);background:transparent;color:var(--muted);border-radius:3px;cursor:pointer;font-family:inherit}
+.ow-file-edit-btn:hover{border-color:var(--blue);color:var(--blue)}
+.ow-file-toggle{font-size:10px;color:var(--dim);flex-shrink:0}
+.ow-file-body{padding:0 10px;max-height:0;overflow:hidden;transition:max-height 0.2s ease,padding 0.2s}
+.ow-file-body.open{max-height:500px;padding:8px 10px;overflow-y:auto}
+
+/* error/loading */
+.loading{color:var(--dim);font-size:12px;padding:12px 16px;text-align:center}
+.error-msg{color:var(--orange);font-size:12px;padding:4px 0}
+
+/* ── Overview-style card（与 pios-home .tw-* 保持同步）── */
+.tw-card{
+  display:flex;flex-direction:column;gap:6px;
+  padding:10px 12px;cursor:pointer;position:relative;
+  background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);
+  border-radius:8px;transition:border-color 0.15s,background 0.15s;min-height:72px
+}
+.tw-card:hover{background:rgba(255,255,255,0.04);border-color:rgba(74,158,255,0.25)}
+.tw-card.disabled{opacity:0.55}
+.tw-head{display:flex;align-items:center;gap:10px}
+.tw-avatar{
+  font-size:20px;line-height:1;flex-shrink:0;
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;border:2px solid
+}
+.tw-avatar.halo-blue{border-color:rgba(74,158,255,0.5);background:rgba(74,158,255,0.08);box-shadow:0 0 8px rgba(74,158,255,0.25)}
+.tw-avatar.halo-orange{border-color:rgba(255,140,66,0.6);background:rgba(255,140,66,0.08);box-shadow:0 0 8px rgba(255,140,66,0.3)}
+.tw-avatar.halo-red{border-color:rgba(255,80,80,0.6);background:rgba(255,80,80,0.08);box-shadow:0 0 6px rgba(255,80,80,0.25)}
+.tw-avatar.halo-gray{border-color:rgba(95,99,104,0.4);background:rgba(95,99,104,0.08);opacity:0.6}
+.tw-name-wrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.tw-name{font-size:13px;color:#e8eaed;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tw-status{font-size:10px;color:#6f7685;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tw-status.ok{color:#4a9eff}
+.tw-status.warn{color:#ff8c42}
+.tw-status.err{color:#ff5050}
+.tw-desc{font-size:10.5px;color:#8b949e;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tw-foot{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  font-size:10px;color:#6f7685;font-variant-numeric:tabular-nums;
+  border-top:1px solid rgba(255,255,255,0.04);padding-top:5px;margin-top:auto
+}
+.tw-foot .tw-dot{color:#333}
+.tw-foot .tw-next{color:#58a6ff}
+.tw-foot .tw-ago{color:#6f7685}
+.tw-foot .tw-req{color:#b0803c}
+.tw-foot .tw-tag{color:#8b6914;font-size:9px;padding:0 4px;border:1px solid #8b6914;border-radius:3px}
+
+/* 详情/配置按钮（卡片右上，toggle 左侧）*/
+.sense-info-btn{background:transparent;border:1px solid var(--border2);color:var(--dim);font-size:11px;cursor:pointer;padding:1px 7px;border-radius:4px;flex-shrink:0;font-family:inherit;line-height:1.4}
+.sense-info-btn:hover{color:var(--blue);border-color:rgba(74,158,255,0.5);background:rgba(74,158,255,0.08)}
+
+/* iOS toggle（与 pios-home .toggle 保持同步）*/
+.toggle{
+  width:36px;height:20px;border-radius:10px;background:#333;
+  position:relative;cursor:pointer;transition:background 0.2s;
+  border:none;flex-shrink:0
+}
+.toggle.on{background:#4a9eff}
+.toggle::after{
+  content:'';position:absolute;width:16px;height:16px;border-radius:50%;
+  background:#fff;top:2px;left:2px;transition:transform 0.2s
+}
+.toggle.on::after{transform:translateX(16px)}
+</style>
+</head>
+<body>
+<div id="header">
+  <h1>✦ Pi</h1>
+  <div class="hd-right">
+    <div id="status-dot"></div>
+    <button id="refresh-btn">↻ 刷新</button>
+  </div>
+</div>
+
+<div id="loading" class="loading">加载中…</div>
+<div id="main" style="display:none">
+
+<!-- ── Sub-tab bar ── -->
+<div class="pi-subtab-bar">
+  <button class="pi-subtab-btn active" onclick="switchPiTab('profile',this)">⚙ Config</button>
+  <button class="pi-subtab-btn" onclick="switchPiTab('owner',this)">👤 Owner</button>
+  <button class="pi-subtab-btn" onclick="switchPiTab('kernel',this)">⚡ Kernel</button>
+  <button class="pi-subtab-btn" onclick="switchPiTab('pipeline',this)">🚰 Pipeline</button>
+  <button class="pi-subtab-btn" onclick="switchPiTab('radar',this)">🔭 Radar</button>
+</div>
+<!-- hidden sink for renderA data (presence used by parent Overview) -->
+<div id="body-a" style="display:none"></div>
+
+<!-- ── Config pane：Pi 自身（身份 / 角色 / 对话历史）── -->
+<div id="pi-pane-profile" class="pi-pane active">
+<div class="pane-subtitle">Pi，PiOS 的核心 AI Agent。PiOS 是一个 AI 原生个人操作系统，Pi 是它的大脑。</div>
+
+<!-- 角色在身份前面，两个默认展开 -->
+<div class="sec" id="sec-e">
+  <div class="sec-head open" onclick="toggleSec('e')">
+    <span class="sec-title">角色</span>
+    <span class="sec-toggle">▶</span>
+  </div>
+  <div class="sec-body open" id="body-e"></div>
+</div>
+
+<div class="sec" id="sec-b">
+  <div class="sec-head open" onclick="toggleSec('b')">
+    <span class="sec-title">身份</span>
+    <span class="sec-toggle">▶</span>
+  </div>
+  <div class="sec-body open" id="body-b"></div>
+</div>
+
+<div class="sec" id="sec-f">
+  <div class="sec-head" onclick="toggleSec('f')">
+    <span class="sec-title">对话历史</span>
+    <span class="sec-toggle">▶</span>
+  </div>
+  <div class="sec-body" id="body-f"></div>
+</div>
+
+<div class="sec" id="sec-d" style="display:none">
+  <div class="sec-body" id="body-d"></div>
+</div>
+
+</div><!-- pi-pane-profile (Config) -->
+
+<!-- ── Owner pane：Owner Profile 文件 + Pending Diffs ── -->
+<div id="pi-pane-owner" class="pi-pane">
+<div class="pane-subtitle">Owner Profile — Pi 对你的认知沉淀。审批 Pi 的建议改动，或手动编辑 Profile 文件。</div>
+  <div id="pi-owner-content" style="padding:8px 16px 12px"><div style="color:var(--dim);font-size:12px">加载中…</div></div>
+</div>
+
+<!-- ── Kernel pane：Pi 核心任务 ── -->
+<div id="pi-pane-kernel" class="pi-pane">
+<div class="pane-subtitle">Pi 的核心调度任务 — triage、sense-maker、cleanup 等自动化循环。</div>
+<div id="body-g" style="padding:12px 16px"></div>
+</div><!-- pi-pane-kernel -->
+
+<!-- ── Pipeline pane：被动订阅 ── -->
+<div id="pi-pane-pipeline" class="pi-pane">
+<div class="pane-subtitle">被动订阅 — Pi 监听的数据管道，定期产出摘要 / 分析。</div>
+<div id="body-h" style="padding:12px 16px"></div>
+</div><!-- pi-pane-pipeline -->
+
+<!-- ── Radar pane：主动扫描 ── -->
+<div id="pi-pane-radar" class="pi-pane">
+<div class="pane-subtitle">主动扫描 — Pi 定期轮询的开放问题，探查外部世界。</div>
+<div id="body-i" style="padding:12px 16px"></div>
+</div>
+
+</div><!-- pi-pane-radar -->
+
+</div><!-- #main -->
+
+<script>
+// ── minimal markdown renderer ──
+function md2html(src) {
+  if (!src) return '';
+  let s = src
+    // fenced code blocks
+    .replace(/```[\w]*\n([\s\S]*?)```/g, (_,c)=>`<pre><code>${esc(c.trim())}</code></pre>`)
+    // inline code
+    .replace(/`([^`]+)`/g, (_,c)=>`<code>${esc(c)}</code>`)
+    // headings
+    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // bold / italic
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    // blockquote
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    // hr
+    .replace(/^---+$/gm, '<hr>')
+    // unordered list items
+    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+    // ordered list items
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+    // links → text only (local context)
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    // line breaks → p
+    .split(/\n\n+/).map(p => {
+      p = p.trim();
+      if (!p) return '';
+      if (p.startsWith('<h') || p.startsWith('<pre') || p.startsWith('<hr') || p.startsWith('<blockquote')) return p;
+      if (p.includes('<li>')) return `<ul>${p}</ul>`;
+      return `<p>${p.replace(/\n/g,'<br>')}</p>`;
+    }).join('\n');
+  return s;
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ── section toggle ──
+function toggleSec(id) {
+  const head = document.querySelector(`#sec-${id} .sec-head`);
+  const body = document.querySelector(`#body-${id}`);
+  if (!head||!body) return;
+  const open = body.classList.contains('open');
+  if(open){head.classList.remove('open');body.classList.remove('open')}
+  else{head.classList.add('open');body.classList.add('open')}
+}
+
+// ── Pi sub-tab switching ──
+function switchPiTab(name, btn) {
+  document.querySelectorAll('.pi-subtab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.pi-pane').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const pane = document.getElementById('pi-pane-' + name);
+  if (pane) pane.classList.add('active');
+  if (name === 'owner') loadOwnerPane();
+}
+
+// ── NPC emoji map ──
+const NPC_EMOJI = {
+  patrick:'⭐',doraemon:'🔵',baymax:'🤖',minion:'💛',
+  kirby:'🌸',totoro:'🌿',slime:'💚',trump:'🇺🇸',starlet:'✨'
+};
+
+// ── render helpers ──
+function renderA(d){
+  // 优先用 characters.current，回落到 npcInfo.current
+  const charList = (d.characters&&d.characters.list)||[];
+  const currentId = (d.characters&&d.characters.current)||(d.npcInfo&&d.npcInfo.current)||'patrick';
+  const current = charList.find(c=>c.id===currentId);
+  const displayName = current&&current.display_name||'Pi';
+  const emoji = current&&current.avatar_emoji||NPC_EMOJI[currentId]||'✦';
+  // extract first paragraph of SOUL.md as identity snippet
+  const soul = d.soul||'';
+  const firstPara = soul.split('\n\n').find(p=>p.trim()&&!p.startsWith('#'))||soul.split('\n').find(p=>p.trim()&&!p.startsWith('#'))||'';
+  const snippet = firstPara.replace(/[*_#]/g,'').trim().slice(0,140);
+  // presence
+  const pr = d.presence||{status:'unknown',label:'未知'};
+  const prDotClass = pr.status==='present'?'present':pr.status==='away'?'away':'unknown';
+  // 底盘价值观：从 alignment.md 读前 2 行非空非标题文字（owner 可编辑 alignment.md）
+  const raw = (d.alignment||'').replace(/^---[\s\S]*?---\n/,'');
+  const alignLines = raw.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'));
+  const alignSnippet = alignLines.slice(0,2).join(' · ').slice(0,80) || '（未配置 alignment.md）';
+  const isBaseForm = currentId === 'pi';
+  const identity = isBaseForm
+    ? `<strong>Pi</strong>`
+    : `<strong>Pi · Character: ${esc(displayName)}</strong>`;
+  document.getElementById('body-a').innerHTML=`
+    <div class="now-row">
+      <div class="now-npc">
+        <div class="npc-orb">${emoji}</div>
+        <div class="npc-label">${esc(displayName)}</div>
+      </div>
+      <div class="now-soul">
+        ${identity}
+        <span>${esc(snippet)}</span>
+        <div class="presence-row">
+          <div class="presence-dot ${prDotClass}"></div>
+          <span class="presence-label">${esc(pr.label)}</span>
+        </div>
+      </div>
+    </div>
+    <div class="base-row">
+      <strong>底盘（不可切换）</strong>：${esc(alignSnippet)} · 红线 · Cards 规则 · 对 ${esc(d.owner||'你')} 的认知 · 记忆
+    </div>
+    <div class="base-row" id="tok-ctx-row" style="margin-top:4px"><strong>Context</strong>：加载中…</div>`;
+}
+
+function renderB(d){
+  const files = [
+    {key:'soul',      label:'SOUL',      content:d.soul,      editable:true,
+      note:'Pi 是谁 · 说话风格 · 权限边界。owner 可编辑。'},
+    {key:'alignment', label:'Alignment', content:d.alignment, editable:true,
+      note:'价值观底盘。owner 可编辑，但切换角色不会改它。'},
+    {key:'boot',      label:'BOOT',      content:d.boot,      editable:false,
+      note:'系统启动协议（tick / session / 架构铁律）。改会破坏系统，除非你在重构 PiOS。'},
+    {key:'heartbeat', label:'HEARTBEAT', content:d.heartbeat, editable:false,
+      note:'系统巡检清单模板。改会影响 Pi 自省循环。'},
+  ];
+  let active = 'soul';
+  let editing = false;
+  function renderBFile(k){
+    const f = files.find(x=>x.key===k);
+    const body = document.getElementById('body-b');
+    const raw = f && f.content ? f.content : '';
+    const tabs = files.map(f=>`<button class="md-file-btn${active===f.key?' active':''}" onclick="__bSwitch('${f.key}')">${f.label}</button>`).join('');
+    const warnOrNote = f.editable
+      ? `<div class="base-row" style="margin-top:0;margin-bottom:8px;border-left-color:rgba(74,158,255,0.3)">✎ ${esc(f.note)}</div>`
+      : `<div class="base-row" style="margin-top:0;margin-bottom:8px;border-left-color:#ff8c42;color:#c9d1d9;background:rgba(255,140,66,0.05)"><strong style="color:#ff8c42">⚠ 系统文件</strong> · ${esc(f.note)}</div>`;
+
+    if (editing && f.editable) {
+      body.innerHTML = `
+        ${warnOrNote}
+        <div class="md-file-tab">${tabs}</div>
+        <textarea id="b-edit-area" style="width:100%;min-height:320px;background:var(--bg2);color:var(--text);border:1px solid var(--border2);border-radius:var(--radius);padding:10px;font-family:'SF Mono',Menlo,monospace;font-size:12px;line-height:1.5;resize:vertical">${esc(raw)}</textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+          <button onclick="__bCancel()" class="md-file-btn" style="cursor:pointer">取消</button>
+          <button onclick="__bSave('${f.key}')" class="md-file-btn" style="cursor:pointer;border-color:#3fb950;color:#3fb950">✓ 保存</button>
+        </div>`;
+      return;
+    }
+
+    const content = raw ? raw.slice(0,8000)+(raw.length>8000?'\n\n…（截断显示）':'') : '（文件不存在）';
+    const editBtn = f.editable
+      ? `<button onclick="__bEdit()" class="md-file-btn" style="cursor:pointer;margin-left:auto">✎ 编辑</button>`
+      : '';
+    body.innerHTML=`
+      ${warnOrNote}
+      <div class="md-file-tab" style="display:flex;align-items:center">${tabs}${editBtn}</div>
+      <div class="md-wrap">${md2html(content)}</div>`;
+  }
+  window.__bSwitch = function(k){
+    // 切 tab 时自动退出编辑（避免丢修改）
+    if (editing) {
+      if (!confirm('你正在编辑当前文件，切换会丢失未保存的修改。确定切走？')) return;
+      editing = false;
+    }
+    active = k;
+    renderBFile(k);
+  };
+  window.__bEdit = function(){ editing = true; renderBFile(active); };
+  window.__bCancel = function(){ editing = false; renderBFile(active); };
+  window.__bSave = async function(file){
+    const ta = document.getElementById('b-edit-area');
+    if (!ta) return;
+    const content = ta.value;
+    try {
+      const r = await fetch('/pi/identity/update', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file,content})});
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || 'unknown');
+      editing = false;
+      // 刷新整个 Pi Tab 让新内容反映到 A 区底盘行 + B 区
+      load();
+    } catch (e) {
+      alert('保存失败: ' + e.message);
+    }
+  };
+  renderBFile(active);
+}
+
+// renderC 2026-04-19 删除，调度能力已并入 Team › Agents/Tasks/Hosts
+
+
+const PROFILE_TEMPLATES = {
+  identity: { label: '身份画像', icon: '🪪', body: `# 身份画像\n\n## 基本\n- 出生年月 / 地理 / 职业：\n- 教育背景：\n\n## 当前角色\n- 在做什么：\n- 想做什么：\n\n## 核心关键词\n（三个能代表你的词）\n- \n- \n- \n` },
+  beliefs: { label: '信念 / 价值观', icon: '🧭', body: `# 信念 & 价值观\n\n## 底层信念\n- \n\n## 判断分歧时的优先级\n1. \n2. \n3. \n\n## 不愿意妥协的红线\n- \n` },
+  timeline: { label: '时间线', icon: '📅', body: `# 时间线\n\n（按年份记录对 Pi 了解你有帮助的大事）\n\n## 2020s\n- \n\n## 2010s\n- \n` },
+  relationships: { label: '关系图谱', icon: '👥', body: `# 关系图谱\n\n## 家人\n- \n\n## 重要朋友\n- \n\n## 合作伙伴 / 同事\n- \n` },
+  thinking: { label: '思维模式', icon: '🧠', body: `# 思维模式\n\n## 决策倾向\n- \n\n## 常用心智模型\n- \n\n## 认知盲点（自己知道的）\n- \n` },
+  knowledge: { label: '知识地图', icon: '🗺️', body: `# 知识地图\n\n## 深度领域\n- \n\n## 业余兴趣\n- \n\n## 想学但还没学的\n- \n` },
+  status: { label: '当前状态', icon: '📊', body: `# 当前状态\n\n## 主业\n- \n\n## 副业 / 项目\n- \n\n## 今年目标\n- \n\n## 最近困扰\n- \n` },
+  health: { label: '健康', icon: '❤️', body: `# 健康\n\n## 身体\n- \n\n## 心理\n- \n\n## 长期慢性问题\n- \n` },
+  supplements: { label: '补剂 / 日常', icon: '💊', body: `# 补剂 & 日常习惯\n\n## 当前在吃\n- \n\n## 饮食偏好 / 禁忌\n- \n\n## 作息节奏\n- \n` },
+  custom: { label: '自定义', icon: '✏️', body: `# （自定义标题）\n\n（自由填写）\n` },
+};
+
+function renderD(d){
+  const profiles = d.profiles||{};
+  const keys = Object.keys(profiles).sort();
+  const toolbar = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <button onclick="__profileNewDialog()" class="md-file-btn" style="cursor:pointer;border-color:var(--blue);color:var(--blue)">+ 新建 Profile 页面</button>
+    </div>`;
+  let html = toolbar;
+  if(keys.length===0){
+    html += '<div class="profile-missing">该文件夹尚未创建或无 .md 文件。点右上「+ 新建 Profile 页面」开始告诉 Pi 你是谁。</div>';
+    document.getElementById('body-d').innerHTML = html;
+    return;
+  }
+  html += '<div class="profile-list">';
+  keys.forEach((fname,i)=>{
+    const content = profiles[fname];
+    const name = fname.replace(/\.md$/,'');
+    const bodyHtml = content
+      ? md2html(content.slice(0,5000)+(content.length>5000?'\n\n…（截断）':''))
+      : '<div class="profile-missing">该文件尚未创建</div>';
+    html += `<div class="profile-item">
+      <div class="profile-item-head" onclick="toggleProfile('pi-prof-${i}')">
+        <span class="profile-item-name">${esc(name)}</span>
+        <span class="profile-item-toggle">▶</span>
+      </div>
+      <div class="profile-item-body md-wrap" id="pi-prof-${i}">${bodyHtml}</div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('body-d').innerHTML=html;
+}
+
+window.__profileNewDialog = function(){
+  let el = document.getElementById('pi-profile-new-overlay');
+  if (el) el.remove();
+  el = document.createElement('div');
+  el.id = 'pi-profile-new-overlay';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);';
+  el.onclick = (ev) => { if (ev.target === el) el.remove(); };
+  const cards = Object.entries(PROFILE_TEMPLATES).map(([k,t]) => `
+    <div onclick="__profilePickTemplate('${k}')" style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:var(--bg2);margin-bottom:6px" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:20px;width:32px;text-align:center">${t.icon}</div>
+      <div style="color:var(--text);font-size:12px;font-weight:600">${esc(t.label)}</div>
+      <div style="color:var(--muted);font-size:10px;font-family:'SF Mono',Menlo,monospace;margin-left:auto">${esc(k)}.md</div>
+    </div>`).join('');
+  el.innerHTML = `
+    <div style="background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:16px;max-width:420px;width:90%;max-height:80vh;overflow-y:auto">
+      <div style="font-size:14px;color:var(--text);font-weight:600;margin-bottom:4px">新建 Owner Profile 页面</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px">选一个模板，给 Pi 讲一块关于你的事。会生成 .md 骨架，去 Obsidian 填。</div>
+      ${cards}
+    </div>`;
+  document.body.appendChild(el);
+};
+
+window.__profilePickTemplate = async function(key){
+  const t = PROFILE_TEMPLATES[key];
+  if (!t) return;
+  const name = prompt(`文件名（英文 / 数字 / - / _，无需后缀）：`, key);
+  if (!name) return;
+  try {
+    const r = await fetch('/pi/profile/create', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name, content: t.body})});
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'unknown');
+    document.getElementById('pi-profile-new-overlay')?.remove();
+    load();
+  } catch (e) {
+    alert('新建失败：' + e.message);
+  }
+};
+window.toggleProfile = function(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const toggle = el.previousElementSibling&&el.previousElementSibling.querySelector('.profile-item-toggle');
+  if(el.classList.contains('open')){
+    el.classList.remove('open');
+    if(toggle) toggle.style.transform='';
+  } else {
+    el.classList.add('open');
+    if(toggle) toggle.style.transform='rotate(90deg)';
+  }
+}
+
+function renderE(d){
+  // 优先 characters（新单一权威）；回落 npcInfo 以兼容旧数据
+  const chars = (d.characters&&Array.isArray(d.characters.list)&&d.characters.list.length>0)
+    ? d.characters
+    : null;
+  if(!chars){
+    // 兼容回退：只用 skin 列表
+    const npc = d.npcInfo||{skins:[],current:'patrick'};
+    if(!npc.skins||npc.skins.length===0){
+      document.getElementById('body-e').innerHTML='<div class="no-runs">角色信息未就绪（下次刷新）</div>';
+      return;
+    }
+    const sortedSkins = [
+      ...npc.skins.filter(s=>s.id===npc.current),
+      ...npc.skins.filter(s=>s.id!==npc.current),
+    ];
+    let html = '<div class="char-grid">';
+    sortedSkins.forEach(s=>{
+      const emoji = NPC_EMOJI[s.id]||'?';
+      const active = s.id===npc.current?' active':'';
+      html += `<div class="char-card${active}" onclick="setSkin('${esc(s.id)}')">
+        <div class="char-head"><div class="char-emoji">${emoji}</div>
+          <div class="char-name">${esc(s.label||s.id)}</div></div>
+      </div>`;
+    });
+    html += '</div>';
+    document.getElementById('body-e').innerHTML=html;
+    return;
+  }
+
+  const currentId = chars.current;
+  window._charCache = chars.list;  // 给 __charEdit modal 用
+  // 激活角色排第一，其余保持原顺序
+  const sortedChars = [
+    ...chars.list.filter(c => c.id === currentId),
+    ...chars.list.filter(c => c.id !== currentId),
+  ];
+  let html = '<div class="char-grid">';
+  sortedChars.forEach(c=>{
+    const emoji = c.avatar_emoji||NPC_EMOJI[c.id]||'?';
+    const active = c.id===currentId;
+    // voice 字段存在 → TTS 用这个音色（qwen-voice 服务端处理）。
+    // voice_verified=true → 加 ✓ 说明过 TTS→ASR 回环自验（高保真）。
+    // voice 为 null → 兜底 DEFAULT_VOICE（小豆温柔）。
+    const voiceChip = c.voice
+      ? (c.voice_verified
+          ? `<span class="char-chip voice-ok" title="已过 TTS→ASR 回环自验（高保真）">✓ ${esc(c.voice)}</span>`
+          : `<span class="char-chip voice-named" title="有专属音色（未过 ASR 回环自验，但 TTS 会用这个音色）">${esc(c.voice)}</span>`)
+      : `<span class="char-chip voice-fallback" title="无专属音色，TTS 兜底 DEFAULT_VOICE（小豆温柔）">无专属音</span>`;
+    // speech_style 首行预览（去 leading "- "）
+    const styleLine = (c.speech_style||'').split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('#')).shift()||'';
+    const stylePreview = styleLine.replace(/^[-*]\s*/,'');
+    const btn = active
+      ? `<button class="char-btn current" disabled>当前</button>`
+      : `<button class="char-btn" onclick="event.stopPropagation();setSkin('${esc(c.id)}')">激活</button>`;
+    // NPC 真形象：优先 PNG idle 缩略图（用 npc-sprite pipeline 真出图）；失败退 SVG；再失败 emoji
+    const skinId = esc(c.skin || c.id);
+    const thumb = `<div class="char-thumb">
+      <img src="/assets/character-thumb/${skinId}.png" alt="${esc(c.display_name||c.id)}"
+        onerror="this.onerror=function(){this.replaceWith(Object.assign(document.createElement('div'),{className:'char-thumb-fallback',textContent:'${emoji}'}))};this.src='/assets/characters/${skinId}.svg'"/>
+    </div>`;
+    const editBtn = `<button onclick="event.stopPropagation();__charEdit('${esc(c.id)}')"
+      title="编辑角色" style="background:none;border:none;color:var(--dim);cursor:pointer;padding:0 4px;font-size:12px;margin-left:auto">✎</button>`;
+    html += `<div class="char-card${active?' active':''}" onclick="setSkin('${esc(c.id)}')">
+      <div class="char-head">
+        ${thumb}
+        <div class="char-name">${esc(c.display_name||c.id)}</div>
+        ${editBtn}
+      </div>
+      ${c.nickname?`<div class="char-nick">"${esc(c.nickname)}"</div>`:''}
+      <div class="char-meta">${voiceChip}</div>
+      ${stylePreview?`<div class="char-style">${esc(stylePreview)}</div>`:''}
+      ${btn}
+    </div>`;
+  });
+  // 末尾加 "+ 新建 NPC" 卡（入口：开 modal 填参数 → POST /pios/create-card → Pi triage 派给 npc-create skill）
+  html += `<div class="char-card char-add" onclick="__npcNew()" title="一键建卡 · npc-create skill 做全套（SVG + 11 pose + 可选语音克隆 + 自验）">
+    <div class="char-head" style="justify-content:center">
+      <div class="char-thumb char-thumb-fallback" style="background:var(--bg3);color:var(--blue);font-size:22px;display:flex;align-items:center;justify-content:center">+</div>
+    </div>
+    <div class="char-name" style="text-align:center;color:var(--blue)">新建 NPC</div>
+    <div class="char-style" style="text-align:center;color:var(--dim)">skill 自动做全套</div>
+  </div>`;
+  html += '</div>';
+  html += `<div class="char-note">
+    切换角色 = 换戏服（名字 / 外观 / 声音 / 说话风格）。
+    你的价值观、红线、对 ${esc(d.owner||'你')} 的认知、记忆、Cards 规则都不变。
+  </div>`;
+  document.getElementById('body-e').innerHTML=html;
+}
+
+function renderF(d){
+  const msgs = d.piMainMessages;
+  if(!msgs){
+    document.getElementById('body-f').innerHTML='<div class="empty-msg">还未跟 Pi 说过话</div>';
+    return;
+  }
+  // 清理 + 归一：role 'ai'/'assistant' → pi；'user'/'human' → user；
+  // 去 <say> 标签只保留内部文字；丢空消息；连续相同 Pi 回复去重
+  // 过滤后台 task 事件（handlePiEvent 写入的 silent:true / engine:'silent' 留档条目）——
+  // 那是 Pi 的活动流，不是 Pi 对 Owner 说的话，不应污染 Talk to Pi。
+  const normalized = [];
+  let lastPiText = '';
+  for (const m of msgs) {
+    if (m.silent === true || m.engine === 'silent') continue;
+    const rawRole = m.role || 'user';
+    const role = (rawRole === 'assistant' || rawRole === 'ai') ? 'pi' : 'user';
+    let content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+    content = content.replace(/<say(?:\s+voice="[^"]*")?\s*>([\s\S]*?)<\/say>/g, '$1').trim();
+    if (!content) continue;
+    if (role === 'pi') {
+      if (content === lastPiText) continue;
+      lastPiText = content;
+    } else {
+      lastPiText = '';
+    }
+    normalized.push({ role, content, meta: m.meta || {}, timestamp: m.timestamp });
+  }
+  if (normalized.length === 0) {
+    document.getElementById('body-f').innerHTML='<div class="empty-msg">pi-main 会话暂无有效消息</div>';
+    return;
+  }
+  let html = '<div class="msg-list">';
+  normalized.slice().reverse().forEach((m,i)=>{
+    const short = m.content.slice(0,200);
+    const hasMore = m.content.length>200;
+    const ts = m.timestamp?new Date(m.timestamp).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):'';
+    const roleLabel = m.role === 'pi' ? 'Pi' : 'You';
+    const roleClass = m.role === 'pi' ? 'assistant' : 'user';
+    const srcBadge = (m.role === 'pi' && m.meta && m.meta.kind === 'proactive' && m.meta.source)
+      ? `<span style="font-size:var(--fs-xs);color:var(--dim);margin-left:6px">· ${esc(m.meta.source)}</span>`
+      : '';
+    html += `<div class="msg-row">
+      <span class="msg-role ${roleClass}">${roleLabel}</span>
+      <span class="msg-content" id="msg-${i}">${esc(short)}${hasMore?'…':''}${srcBadge}</span>
+      ${ts?`<span class="msg-ts">${ts}</span>`:''}
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('body-f').innerHTML=html;
+}
+
+// ── character 编辑 modal（D 区 ✎） ──
+window.__charEdit = function(id){
+  const c = (window._charCache || []).find(x => x.id === id);
+  if (!c) return alert('未找到角色 ' + id);
+  // voice 下拉选项：从已有角色收集 unique voice，加空选（兜底）
+  const allVoices = [...new Set((window._charCache || []).map(x => x.voice).filter(Boolean))];
+  const voiceOpts = ['<option value="">（无专属音 · 兜底 DEFAULT_VOICE）</option>']
+    .concat(allVoices.map(v => `<option value="${esc(v)}"${c.voice===v?' selected':''}>${esc(v)}</option>`))
+    .join('');
+  const catchphrasesText = Array.isArray(c.catchphrases) ? c.catchphrases.join('\n') : '';
+
+  let el = document.getElementById('pi-char-edit-overlay');
+  if (el) el.remove();
+  el = document.createElement('div');
+  el.id = 'pi-char-edit-overlay';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);';
+  el.onclick = (ev) => { if (ev.target === el) el.remove(); };
+  const field = (label, inputHtml, note='') => `
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:3px">${label}</label>
+      ${inputHtml}
+      ${note?`<div style="font-size:10px;color:var(--dim);margin-top:2px">${note}</div>`:''}
+    </div>`;
+  const inp = (id, val) => `<input id="${id}" value="${esc(val||'')}" style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:5px 8px;border-radius:4px;font-family:inherit;font-size:12px"/>`;
+  const ta = (id, val, rows=3) => `<textarea id="${id}" rows="${rows}" style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:6px 8px;border-radius:4px;font-family:'SF Mono',Menlo,monospace;font-size:11.5px;resize:vertical">${esc(val||'')}</textarea>`;
+  const sel = (id, opts) => `<select id="${id}" style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:5px 8px;border-radius:4px;font-family:inherit;font-size:12px">${opts}</select>`;
+
+  el.innerHTML = `
+    <div style="background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:16px;max-width:520px;width:92%;max-height:88vh;overflow-y:auto;position:relative">
+      <button onclick="document.getElementById('pi-char-edit-overlay').remove()"
+        style="position:absolute;top:8px;right:12px;background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer" title="关闭">×</button>
+      <div style="font-size:14px;color:var(--text);font-weight:600;margin-bottom:4px">编辑角色 · ${esc(c.display_name||id)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;font-family:'SF Mono',Menlo,monospace">id=${esc(id)} · skin=${esc(c.skin||id)} · voice_verified=${c.voice_verified?'✓':'✗'}</div>
+      ${field('Display name', inp('ce-display_name', c.display_name))}
+      ${field('Nickname', inp('ce-nickname', c.nickname))}
+      ${field('Avatar emoji', inp('ce-avatar_emoji', c.avatar_emoji), '一个 emoji，用于 Overview 团队墙等文本场景')}
+      ${field('Speech style (多行)', ta('ce-speech_style', c.speech_style, 5), '每行一条风格要点')}
+      ${field('Catchphrases (每行一条)', ta('ce-catchphrases', catchphrasesText, 4))}
+      ${field('How to address owner', inp('ce-how_it_addresses_owner', c.how_it_addresses_owner), '可以用 {owner} 占位符')}
+      ${field('Disagreement style', inp('ce-disagreement_style', c.disagreement_style))}
+      ${field('Metaphor pool', inp('ce-metaphor_pool', c.metaphor_pool))}
+      ${field('Emoji level', sel('ce-emoji_level', ['none','low','medium','high'].map(v=>`<option value="${v}"${c.emoji_level===v?' selected':''}>${v}</option>`).join('')))}
+      ${field('Voice', sel('ce-voice', voiceOpts), 'voice 只能从已注册音色选。要加新音色走克隆流程（见 docs/pi-npc.md）')}
+      ${field('磁性 (voice_magnetic)', sel('ce-voice_magnetic', ['raw','soft','mid','strong'].map(v=>`<option value="${v}"${(c.voice_magnetic||'mid')===v?' selected':''}>${v==='raw'?'原声（无 AI 音效）':v==='soft'?'柔 soft':v==='mid'?'中 mid（默认）':'强 strong'}</option>`).join('')), 'aecho 磁性回声档位。原声 = 完全 bypass filter；soft/mid 适合长韵律女声；strong 适合短促男声')}
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+        <button onclick="document.getElementById('pi-char-edit-overlay').remove()" class="md-file-btn" style="cursor:pointer">取消</button>
+        <button onclick="__charSave('${esc(id)}')" class="md-file-btn" style="cursor:pointer;border-color:#3fb950;color:#3fb950">✓ 保存</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+};
+window.__charSave = async function(id){
+  const v = (k) => document.getElementById('ce-'+k);
+  const catchphrases = (v('catchphrases').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  const updates = {
+    display_name: v('display_name').value.trim(),
+    nickname: v('nickname').value.trim(),
+    avatar_emoji: v('avatar_emoji').value.trim(),
+    speech_style: v('speech_style').value,
+    catchphrases,
+    how_it_addresses_owner: v('how_it_addresses_owner').value.trim(),
+    disagreement_style: v('disagreement_style').value.trim(),
+    metaphor_pool: v('metaphor_pool').value.trim(),
+    emoji_level: v('emoji_level').value,
+    voice: v('voice').value || null,
+    voice_magnetic: v('voice_magnetic').value,
+  };
+  try {
+    const r = await fetch('/pi/character/update', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id, updates})});
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'unknown');
+    document.getElementById('pi-char-edit-overlay')?.remove();
+    load();
+  } catch (e) {
+    alert('保存失败：' + e.message);
+  }
+};
+
+// ── 新建 NPC（D 区 + 卡）· 一键建卡交给 npc-create skill ──
+window.__npcNew = async function(){
+  let el = document.getElementById('pi-npc-new-overlay');
+  if (el) el.remove();
+  el = document.createElement('div');
+  el.id = 'pi-npc-new-overlay';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+  el.onclick = (ev) => { if (ev.target === el) el.remove(); };
+  const field = (label, inputHtml, note='') => `
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:3px">${label}</label>
+      ${inputHtml}
+      ${note?`<div style="font-size:10px;color:var(--dim);margin-top:2px">${note}</div>`:''}
+    </div>`;
+  const inp = (id, placeholder='', val='') => `<input id="${id}" placeholder="${esc(placeholder)}" value="${esc(val)}" style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:6px 8px;border-radius:4px;font-family:inherit;font-size:12px"/>`;
+  // 已注册音色下拉：通过 PiOS 代理 /pios/voices → qwen-voice /api/voices；绕开 renderer 跨源限制
+  let voiceData = { voices: [], builtin_voices: [], clone_voices: [] };
+  try {
+    const r = await fetch('/pios/voices');
+    if (r.ok) voiceData = await r.json();
+  } catch {}
+  const verifiedSet = new Set((window._charCache || []).filter(c => c.voice_verified && c.voice).map(c => c.voice));
+  const existingVoiceOpts = (() => {
+    const parts = ['<option value="">—— 选一个 ——</option>'];
+    if (voiceData.clone_voices && voiceData.clone_voices.length) {
+      parts.push('<optgroup label="克隆音色 (clone) · ✓ 已 owner 听测 / ⚠ 未验证">');
+      for (const v of voiceData.clone_voices) {
+        const mark = verifiedSet.has(v) ? '✓' : '⚠';
+        parts.push(`<option value="${esc(v)}">${esc(v)} ${mark}</option>`);
+      }
+      parts.push('</optgroup>');
+    }
+    if (voiceData.builtin_voices && voiceData.builtin_voices.length) {
+      parts.push('<optgroup label="内置音色 (builtin · 英/中通用)">');
+      for (const v of voiceData.builtin_voices) parts.push(`<option value="${esc(v)}">${esc(v)}</option>`);
+      parts.push('</optgroup>');
+    }
+    return parts.join('');
+  })();
+  el.innerHTML = `
+    <div style="background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:16px;max-width:480px;width:92%;max-height:88vh;overflow-y:auto;position:relative">
+      <button onclick="document.getElementById('pi-npc-new-overlay').remove()"
+        style="position:absolute;top:8px;right:12px;background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer" title="关闭">×</button>
+      <div style="font-size:14px;color:var(--text);font-weight:600;margin-bottom:4px">新建 NPC · 一键交给 npc-create skill</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5">提交后 Pi triage 派到 work，自动做 SVG + 11 pose + 语音 + build。</div>
+      <div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border2);border-radius:6px;padding:2px;background:var(--bg2)">
+        <button type="button" data-nn-tab="manual"
+          style="flex:1;padding:7px 10px;background:var(--blue);color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:500">手动填写</button>
+        <button type="button" data-nn-tab="describe"
+          style="flex:1;padding:7px 10px;background:transparent;color:var(--muted);border:none;border-radius:4px;cursor:pointer;font-size:12px">描述 · Pi 自主</button>
+      </div>
+      <div id="nn-pane-manual">
+        ${field('角色 id ★', inp('nn-id', '如 peppa / garfield / mario'), 'id 全新，不能和 characters.yaml 已有冲突；小写英文/数字/连字符')}
+        ${field('显示名 ★', inp('nn-name', '如 小猪佩奇'), '')}
+        ${field('昵称', inp('nn-nick', '如 佩奇'), '可选')}
+        ${field('Avatar Emoji', inp('nn-emoji', '如 🐷'), '可选，一个 emoji')}
+      <div style="margin-bottom:10px">
+        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:6px">语音模式</label>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:8px;border:1px solid var(--border2);border-radius:5px" data-vm-row="find">
+            <input type="radio" name="nn-vm" value="find" checked style="margin-top:2px"/>
+            <div style="flex:1">
+              <div style="font-size:12px;color:var(--text)">Pi 帮忙找（默认）</div>
+              <div style="font-size:10px;color:var(--dim);line-height:1.4">Pi 去 Bilibili 搜 → 挑教学/模仿视频 → 下载 → 通知你去 picker 挑片段</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:8px;border:1px solid var(--border2);border-radius:5px" data-vm-row="provide">
+            <input type="radio" name="nn-vm" value="provide" style="margin-top:2px"/>
+            <div style="flex:1">
+              <div style="font-size:12px;color:var(--text)">我提供源</div>
+              <div style="font-size:10px;color:var(--dim);margin-bottom:4px">BV 号 / YouTube URL / 本地 wav 路径</div>
+              <input id="nn-src" placeholder="BV1L7QxBtESV / https://... / /path/to.wav" disabled
+                style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:5px 8px;border-radius:4px;font-size:12px;opacity:0.5"/>
+            </div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:8px;border:1px solid var(--border2);border-radius:5px" data-vm-row="pick">
+            <input type="radio" name="nn-vm" value="pick" style="margin-top:2px"/>
+            <div style="flex:1">
+              <div style="font-size:12px;color:var(--text)">用已有音色</div>
+              <div style="font-size:10px;color:var(--dim);margin-bottom:4px">不克隆，直接映射到 qwen-voice 已注册音色</div>
+              <select id="nn-existing" disabled
+                style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:5px 8px;border-radius:4px;font-size:12px;opacity:0.5">${existingVoiceOpts}</select>
+            </div>
+          </label>
+        </div>
+      </div>
+      </div>
+
+      <div id="nn-pane-describe" style="display:none">
+        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px">描述</label>
+        <textarea id="nn-desc" rows="7" placeholder="如：我想做一个小豆，温柔的女助理，像邻家姐姐的感觉&#10;或者：来个雷神，声音低沉有力，说话像长辈&#10;或者：做个叫 Luna 的月亮精灵，轻飘飘、说话会带诗意..."
+          style="width:100%;background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:5px;font-family:inherit;font-size:12px;resize:vertical;line-height:1.5"></textarea>
+        <div style="font-size:10px;color:var(--dim);margin-top:6px;line-height:1.5">Pi 读懂描述后自己规划 id / 显示名 / 昵称 / emoji / 视觉素材 / 音色来源 / speech_style 全部。不确定时会在卡里问你回。</div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button onclick="document.getElementById('pi-npc-new-overlay').remove()"
+          style="background:var(--bg3);border:1px solid var(--border2);color:var(--muted);padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">取消</button>
+        <button id="nn-submit"
+          style="background:var(--blue);border:none;color:white;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:12px">建卡 → 派给 npc-create</button>
+      </div>
+      <div id="nn-msg" style="font-size:11px;color:var(--muted);margin-top:10px;min-height:14px"></div>
+    </div>`;
+  document.body.appendChild(el);
+  document.getElementById('nn-id').focus();
+  document.getElementById('nn-submit').onclick = __npcNewSubmit;
+  // 顶部 tab 切换：manual（手动填全部字段）/ describe（只写描述，Pi 自主）
+  window._npcNewTab = 'manual';
+  const tabBtns = el.querySelectorAll('[data-nn-tab]');
+  const paneManual = document.getElementById('nn-pane-manual');
+  const paneDescribe = document.getElementById('nn-pane-describe');
+  const setTab = (tab) => {
+    window._npcNewTab = tab;
+    paneManual.style.display = tab === 'manual' ? 'block' : 'none';
+    paneDescribe.style.display = tab === 'describe' ? 'block' : 'none';
+    tabBtns.forEach(b => {
+      const active = b.dataset.nnTab === tab;
+      b.style.background = active ? 'var(--blue)' : 'transparent';
+      b.style.color = active ? 'white' : 'var(--muted)';
+      b.style.fontWeight = active ? '500' : 'normal';
+    });
+    if (tab === 'manual') document.getElementById('nn-id').focus();
+    else document.getElementById('nn-desc').focus();
+  };
+  tabBtns.forEach(b => { b.onclick = () => setTab(b.dataset.nnTab); });
+
+  // 语音模式 radio 切换：只管 find / provide / pick，不涉及 describe
+  el.querySelectorAll('input[name=nn-vm]').forEach(r => {
+    r.onchange = () => {
+      const mode = el.querySelector('input[name=nn-vm]:checked').value;
+      const src = document.getElementById('nn-src');
+      const exi = document.getElementById('nn-existing');
+      src.disabled = mode !== 'provide';
+      src.style.opacity = mode === 'provide' ? '1' : '0.5';
+      exi.disabled = mode !== 'pick';
+      exi.style.opacity = mode === 'pick' ? '1' : '0.5';
+      el.querySelectorAll('[data-vm-row]').forEach(row => {
+        const active = row.dataset.vmRow === mode;
+        row.style.borderColor = active ? 'var(--blue)' : 'var(--border2)';
+        row.style.background = active ? 'rgba(74,158,255,0.06)' : 'transparent';
+      });
+      if (mode === 'provide') src.focus();
+      if (mode === 'pick') exi.focus();
+    };
+  });
+  // 初始高亮 find
+  el.querySelector('[data-vm-row=find]').style.borderColor = 'var(--blue)';
+  el.querySelector('[data-vm-row=find]').style.background = 'rgba(74,158,255,0.06)';
+};
+
+window.__npcNewSubmit = async function(){
+  // 顶层 tab 决定 mode：describe = Pi 自主；manual = 用下面 radio 选的 voice mode
+  const tab = window._npcNewTab || 'manual';
+  const mode = tab === 'describe'
+    ? 'describe'
+    : (document.querySelector('input[name=nn-vm]:checked')?.value || 'find');
+  const id = document.getElementById('nn-id').value.trim();
+  const displayName = document.getElementById('nn-name').value.trim();
+  const nickname = document.getElementById('nn-nick').value.trim();
+  const emoji = document.getElementById('nn-emoji').value.trim();
+  const src = document.getElementById('nn-src').value.trim();
+  const existingVoice = document.getElementById('nn-existing').value.trim();
+  const description = (document.getElementById('nn-desc')?.value || '').trim();
+  const msg = document.getElementById('nn-msg');
+  // describe 模式：上面 id/name 可全空，Pi 自己从描述里提炼；其他三模式按原规则校验
+  if (mode !== 'describe') {
+    if (!id || !/^[a-z0-9-]+$/.test(id)) { msg.textContent='id 必填，小写英文/数字/连字符'; return; }
+    if (!displayName) { msg.textContent='显示名必填'; return; }
+    const existing = (window._charCache || []).find(c => c.id === id);
+    if (existing) { msg.textContent=`id '${id}' 已存在（${existing.display_name}）`; return; }
+  }
+  if (mode === 'provide' && !src) { msg.textContent='"我提供源"模式下源必填'; return; }
+  if (mode === 'pick' && !existingVoice) { msg.textContent='"用已有音色"模式下要选一个音色'; return; }
+  if (mode === 'describe' && !description) { msg.textContent='"描述"模式下要写一段描述'; return; }
+  msg.textContent='建卡中…';
+  const today = new Date().toISOString().slice(0,10);
+  // describe 模式 id 未定，用时间戳占位，worker 规划完再 rename 卡 / 填 yaml
+  const filename = mode === 'describe'
+    ? `npc-describe-${Date.now().toString(36)}-create`
+    : `npc-${id}-create`;
+  // args：四模式对应不同字段
+  const voiceArg = mode === 'find' ? { mode: 'find' }
+                  : mode === 'provide' ? { mode: 'provide', src }
+                  : mode === 'pick' ? { mode: 'pick', existing_voice: existingVoice }
+                  : { mode: 'describe', description };
+  const argsObj = { voice: voiceArg };
+  if (mode !== 'describe') {
+    argsObj.id = id;
+    argsObj.display_name = displayName;
+    if (nickname) argsObj.nickname = nickname;
+    if (emoji) argsObj.avatar_emoji = emoji;
+  } else {
+    argsObj.description = description;
+  }
+  const frontmatter = {
+    type: 'task',
+    status: 'inbox',
+    priority: 'normal',
+    created: today,
+    skill: 'npc-create',
+    assignee: 'pi',
+    args: argsObj,
+  };
+  const modeLine = mode === 'find' ? 'Pi 帮忙找（自动搜 Bilibili → 挑教学/模仿视频 → 下载 → 走 voice-clip-picker）'
+                  : mode === 'provide' ? `我提供的源：\`${src}\`（走 voice-clip-picker）`
+                  : mode === 'pick' ? `复用已有音色：\`${existingVoice}\`（不克隆，直接映射）`
+                  : `描述模式 · Pi 自主规划：根据 Owner 描述自行决定视觉素材、音色来源、speech_style（见下方描述块）`;
+  const descBlock = mode === 'describe' ? `\n## Owner 描述（describe 模式）\n\n> ${description.split('\n').join('\n> ')}\n\n**Worker 指引**：读懂描述后自主规划：\n- 视觉：判断是否有知名 IP / 动漫原型，有则搜素材；否则按描述画 SVG\n- 音色：按描述语气挑 qwen-voice 已有 clone voice 或搜 Bilibili 克隆新声\n- speech_style / catchphrases：根据描述提炼 4-5 条风格要点\n- 把决策过程写进工作记录，让 Owner 能看到推理链\n` : '';
+  const title = mode === 'describe'
+    ? `NPC Create · 描述模式（Pi 自主规划）`
+    : `NPC Create: ${displayName} (${id})`;
+  const paramsBlock = mode === 'describe'
+    ? `- voice.mode: describe\n- id / display_name / nickname / avatar_emoji：**未指定**，Pi 从描述里提炼\n`
+    : `- id: ${id}\n- display_name: ${displayName}\n${nickname?`- nickname: ${nickname}\n`:''}${emoji?`- avatar_emoji: ${emoji}\n`:''}- voice.mode: ${mode}\n${mode==='provide'?`- voice.src: ${src}\n`:''}${mode==='pick'?`- voice.existing_voice: ${existingVoice}\n`:''}`;
+  const verifyLine = mode === 'describe'
+    ? '4. **闭环**：写 verify-npc-<id>.md 卡（id 由 Pi 规划时确定，24h 观察期）'
+    : `4. **闭环**：写 verify-npc-${id}.md 卡（24h 观察期）`;
+  const content = `# ${title}\n\n由 PiOS Home / Team / Pi 的「+ 新建 NPC」按钮创建。\n\n## 任务\n\n使用 \`npc-create\` skill 做全套：\n1. **视觉**：characters.yaml 插条目 + bubble.html 注入 SVG + 11 pose CSS + 注册\n2. **语音**（按 voice.mode 分支）：${modeLine}\n3. **自验**：standalone 14 pose preview + owner 重启 PiOS 听本音\n${verifyLine}\n\n详见 \`~/.claude/skills/npc-create/SKILL.md\`。\n${descBlock}\n## 参数\n\n${paramsBlock}\n## 工作记录\n\n- ${today} 由 PiOS Home / Team / Pi 入口创建\n`;
+  try {
+    const r = await fetch('/pios/create-card', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, dir: 'inbox', frontmatter, content }),
+    });
+    const j = await r.json();
+    if (!j.ok) { msg.textContent = '失败：' + (j.error || 'unknown'); return; }
+    msg.innerHTML = `✓ 已建卡 <code>${esc(j.filename||filename)}</code>（inbox，等 triage 派发）<br>想立刻触发：Home/Agents 手动 kick pi-triage`;
+    document.getElementById('nn-submit').disabled = true;
+    document.getElementById('nn-submit').textContent = '已派发 ✓';
+  } catch (e) {
+    msg.textContent = '请求失败：' + e.message;
+  }
+};
+
+// ── context window usage ──
+async function loadContextUsage() {
+  const row = document.getElementById('tok-ctx-row');
+  if (!row) return;
+  try {
+    const r = await fetch('/pi/context-usage?t=' + Date.now());
+    if (!r.ok) { row.style.display = 'none'; return; }
+    const d = await r.json();
+    if (!d.ok || !d.used) {
+      row.innerHTML = '<strong>Context</strong>：暂无数据（未开始对话）';
+      return;
+    }
+    const usedK = (d.used / 1000).toFixed(1);
+    const totalK = Math.round(d.total / 1000);
+    const pct = d.pct;
+    const barColor = pct >= 80 ? 'var(--orange)' : pct >= 60 ? '#d4a017' : 'var(--blue)';
+    row.innerHTML = `<strong>Context</strong>：${usedK}k / ${totalK}k (${pct}%)
+      <div style="margin-top:3px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${Math.min(pct,100)}%;background:${barColor};border-radius:2px;transition:width 0.4s"></div>
+      </div>`;
+  } catch {
+    row.innerHTML = '<strong>Context</strong>：加载失败';
+  }
+}
+
+// ── skin switch ──
+window.setSkin = async function(skinId){
+  try{
+    await fetch('/pi/skin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({skin:skinId})});
+    load(); // refresh to show new active
+  } catch(e){console.error('[pi-tab] setSkin',e)}
+}
+
+// ── main load ──
+async function load(){
+  const dot = document.getElementById('status-dot');
+  const loading = document.getElementById('loading');
+  const main = document.getElementById('main');
+  loading.style.display='block';
+  main.style.display='none';
+  dot.className='';
+  try {
+    const resp = await fetch('/pi/data?t='+Date.now());
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const d = await resp.json();
+    renderA(d);
+    renderB(d);
+    renderD(d);
+    renderE(d);
+    renderF(d);
+    renderG();  // Pi tasks（kernel + 自我维护 maintenance 借壳跑）
+    renderSenseInPi();  // H Pipeline + I Radar（原 Pi-Plus 内容归位 Pi 能力）
+    loading.style.display='none';
+    main.style.display='block';
+    dot.className='ok';
+    loadContextUsage();
+  } catch(e) {
+    loading.textContent='加载失败：'+e.message;
+    loading.style.color='var(--orange)';
+    dot.className='err';
+  }
+}
+
+// ── G · Pi 任务 ──
+// Kernel（pi）+ 自我维护（maintenance，语义归入 pi）的 task 集中在 Pi 页展示。
+// 数据来源：/pios/tasks，filter agent ∈ {pi, maintenance}
+// 只读卡片：展示状态 / 时序 / Enable 开关，操作跳 Tasks tab。
+async function renderG() {
+  const el = document.getElementById('body-g');
+  if (!el) return;
+  try {
+    const resp = await fetch('/pios/tasks?t=' + Date.now());
+    const all = await resp.json();
+    const tasks = (Array.isArray(all) ? all : []).filter(t => t.agent === 'pi' || t.agent === 'maintenance');
+    if (!tasks.length) { el.innerHTML = '<div class="no-runs">无任务</div>'; return; }
+    tasks.sort((a, b) => {
+      if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
+      if (a.nextRun && b.nextRun) return new Date(a.nextRun) - new Date(b.nextRun);
+      return 0;
+    });
+
+    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;padding:4px 0">';
+    for (const t of tasks) {
+      const lr = t.lastRunRecord || {};
+      const st = lr.status || null;
+      const last = lr.started_at ? '✓ 上次 ' + fmtRelTime(lr.started_at) : null;
+      const next = t.enabled && t.nextRun ? '下次 ' + fmtRelTime(t.nextRun) : null;
+      const icon = t.agent === 'maintenance' ? '🧹' : '✦';
+      const halo = !t.enabled ? 'halo-gray' : st === 'success' ? 'halo-blue' : st === 'running' ? 'halo-orange' : st === 'failed' ? 'halo-red' : 'halo-gray';
+      const stCls = !t.enabled ? '' : st === 'success' ? 'ok' : st === 'running' ? 'warn' : st === 'failed' ? 'err' : '';
+      const stText = !t.enabled ? '禁用' : (st || '未运行');
+
+      const footParts = [];
+      if (last) footParts.push(`<span class="tw-ago">${escText(last)}</span>`);
+      if (next) footParts.push(`<span class="tw-next">${escText(next)}</span>`);
+      if (t.cron) footParts.push(`<span title="${escText(t.cron)}">⏱ ${escText(formatSchedule(t.cron) || t.cron)}</span>`);
+      const foot = footParts.length
+        ? `<div class="tw-foot">${footParts.join('<span class="tw-dot">·</span>')}</div>` : '';
+
+      html += `<div class="tw-card${t.enabled?'':' disabled'}" onclick="if(event.target.tagName!=='BUTTON')piGoToTasks('${escText(t.taskId)}')">
+        <div class="tw-head">
+          <div class="tw-avatar ${halo}">${icon}</div>
+          <div class="tw-name-wrap">
+            <div class="tw-name">${escText(t.taskId)}</div>
+            <div class="tw-status ${stCls}">${escText(stText)}</div>
+          </div>
+          <button class="toggle${t.enabled?' on':''}" onclick="event.stopPropagation();piKernelToggle('${escText(t.taskId)}',${!t.enabled},this)" title="${t.enabled?'点击禁用':'点击启用'}"></button>
+        </div>
+        ${t.description ? `<div class="tw-desc">${escText(t.description)}</div>` : ''}
+        ${foot}
+      </div>`;
+    }
+    html += '</div>';
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = `<div class="no-runs" style="color:var(--orange)">加载失败：${escText(e.message)}</div>`;
+  }
+}
+
+// 跳到 Tasks tab，传 taskId 展开定位
+function piGoToTasks(taskId) {
+  try {
+    if (window.parent && typeof window.parent.switchTab === 'function') {
+      window.parent.switchTab('tasks', taskId || undefined);
+    }
+  } catch {}
+}
+
+// Kernel task enable/disable（不走 sense API，走 /pios/task/update）
+async function piKernelToggle(taskId, nextEnabled, btn) {
+  if (btn) { btn.disabled = true; }
+  try {
+    await fetch('/pios/task/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId, updates: { enabled: nextEnabled } }),
+    });
+    renderG();
+  } catch (e) {
+    if (btn) { btn.disabled = false; }
+    alert('操作失败：' + e.message);
+  }
+}
+
+// 共用时间格式化（供 renderG 和 _renderSenseCardInPi 复用）
+function fmtRelTime(iso) {
+  if (!iso) return '—';
+  const t = new Date(iso).getTime();
+  const diff = Math.abs(Date.now() - t);
+  const min = Math.round(diff / 60000);
+  const ahead = Date.now() > t;
+  if (min < 60) return min + 'm ' + (ahead ? '前' : '后');
+  const h = Math.round(min / 60);
+  if (h < 24) return h + 'h ' + (ahead ? '前' : '后');
+  return Math.round(h / 24) + 'd ' + (ahead ? '前' : '后');
+}
+
+function escText(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// 与 pios-home formatSchedule 保持同步
+function formatSchedule(cron) {
+  if (!cron) return '';
+  const parts = cron.trim().split(/\s+/);
+  if (parts.length < 5) return cron;
+  const [min, hour, dom, mon, dow] = parts;
+  if (min.startsWith('*/') && hour === '*') return `每 ${min.slice(2)} 分钟`;
+  if (min !== '*' && hour.startsWith('*/')) return `每 ${hour.slice(2)}h @ :${min.padStart(2,'0')}`;
+  const timeStr = (hour !== '*' && min !== '*') ? `${hour.padStart(2,'0')}:${min.padStart(2,'0')}` : null;
+  const dayMap = {'0':'周日','1':'周一','2':'周二','3':'周三','4':'周四','5':'周五','6':'周六','7':'周日'};
+  if (dom !== '*' && dow === '*') return `每月 ${dom} 日${timeStr ? ' ' + timeStr : ''}`;
+  if (dow !== '*' && dom === '*') {
+    if (dow === '1-5') return `工作日${timeStr ? ' ' + timeStr : ''}`;
+    return dow.split(',').map(d => dayMap[d] || d).join('/') + (timeStr ? ' ' + timeStr : '');
+  }
+  if (dom === '*' && dow === '*' && timeStr) return `每天 ${timeStr}`;
+  return cron;
+}
+
+// ── H Pipeline + I Radar ──
+// 原 Home/Pi-Plus 的 Sense 内容，归位到 Pi sub-tab 作为"Pi 能力"分区。
+// 数据源：/pios/sense。Modal 操作（toggle/config/output/新建 Radar）跨 frame 调
+// window.parent 的 senseXxx 函数（parent = pios-home，overlay 在 body 层显示）。
+async function renderSenseInPi() {
+  const piH = document.getElementById('body-h');
+  const piI = document.getElementById('body-i');
+  if (!piH || !piI) return;
+  let data;
+  try {
+    const resp = await fetch('/pios/sense?t=' + Date.now());
+    data = await resp.json();
+  } catch (e) {
+    piH.innerHTML = piI.innerHTML = `<div class="no-runs" style="color:var(--orange)">加载失败：${escText(e.message)}</div>`;
+    return;
+  }
+  // senseViewOutput 走 HTTP API 不查 senseState；不再需要跨 frame sync（2026-04-28 删）
+  piH.innerHTML = _renderSenseGrid(data.pipelines || [], 'pipelines');
+  let radarHtml = _renderSenseGrid(data.radars || [], 'radars');
+  radarHtml += `<div style="margin-top:16px;padding:14px;border:1px dashed #30363d;border-radius:8px;text-align:center">
+    <button onclick="piNewRadar()" style="padding:6px 16px;font-size:12px;border:1px solid #4a9eff;background:rgba(74,158,255,0.08);color:#4a9eff;border-radius:6px;cursor:pointer">+ 新建 Radar</button>
+    <div style="margin-top:4px;font-size:10px;color:#6e7681">订阅一个开放问题，让 Pi 定期扫外界</div>
+  </div>`;
+  piI.innerHTML = radarHtml;
+}
+
+function _renderSenseGrid(items, section) {
+  if (!items.length) return '<div class="no-runs">暂无</div>';
+  let h = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;padding:4px 0">';
+  for (const it of items) h += _renderSenseCardInPi(it, section);
+  h += '</div>';
+  return h;
+}
+
+// Overview-style 卡片（Pipeline / Radar）
+// 点卡片 → 跳 Tasks 展开 + 滚动到该 task（行为对齐 Kernel）
+// Head 右侧：[详情按钮 = 看最新产出] [iOS toggle]
+// 配置（cron/icon/下游）走 Tasks/Agents，不在卡片层暴露
+function _renderSenseCardInPi(it, section) {
+  const rt = it.runtime || {};
+  const isRadar = section === 'radars';
+  const out = it.output || {};
+  const hasOutput = !!out.path;
+
+  const st = rt.lastRunRecord?.status || null;
+  const halo = !it.enabled ? 'halo-gray' : st === 'success' ? 'halo-blue' : st === 'running' ? 'halo-orange' : st === 'failed' ? 'halo-red' : 'halo-gray';
+  const stCls = !it.enabled ? '' : st === 'success' ? 'ok' : st === 'running' ? 'warn' : st === 'failed' ? 'err' : '';
+  const stText = !it.enabled ? '禁用' : (st || '未运行');
+
+  // desc：只为 Radar 保留（问题本身是 Radar 的语义标识，不是路径）
+  // Pipeline 的 "源 · xxx" 属于配置信息，搬进详情 modal
+  let descLine = '';
+  if (isRadar) {
+    const q = (it.question || '').replace(/\n/g, ' ').trim() || '(无问题)';
+    descLine = `<div class="tw-desc">${escText('? ' + q)}</div>`;
+  }
+
+  // foot：上次 / 下次 / cron / 下游（运行时信息，保留）
+  const lastRun = rt.lastRunRecord?.started_at ? '✓ 上次 ' + fmtRelTime(rt.lastRunRecord.started_at) : null;
+  const nextRun = it.enabled && rt.nextRun ? '下次 ' + fmtRelTime(rt.nextRun) : null;
+  const footParts = [];
+  if (lastRun) footParts.push(`<span class="tw-ago">${escText(lastRun)}</span>`);
+  if (nextRun) footParts.push(`<span class="tw-next">${escText(nextRun)}</span>`);
+  if (rt.cron) footParts.push(`<span title="${escText(rt.cron)}">⏱ ${escText(formatSchedule(rt.cron) || rt.cron)}</span>`);
+  if (it.project) footParts.push(`<span class="tw-tag">${escText(it.project)}</span>`);
+  (it.downstream || []).forEach(d => footParts.push(`<span class="tw-req">${escText(d)}</span>`));
+  const foot = footParts.length
+    ? `<div class="tw-foot">${footParts.join('<span class="tw-dot">·</span>')}</div>` : '';
+
+  // 点整卡片 → 跳 Tasks 展开对应 task（行为对齐 Kernel 卡片）
+  // ⚠ owner 2026-04-28：禁止再分叉成"hasOutput → 看产物"。看产物用右上详情按钮。
+  // 之前 6940816 把 hasOutput 路径调用 senseOpenLatestOutput（父窗口未实现）→ 静默 noop。
+  // 别再回退这条统一路径，详见 Cards/active/verify-pi-pipeline-radar-click-routes.md
+  const taskIdForJump = it.task_ref ? it.task_ref.split('/').pop() : it.id;
+  const cardClick = `if(event.target.tagName!=='BUTTON')piGoToTasks('${escText(taskIdForJump)}')`;
+
+  return `<div class="tw-card${it.enabled?'':' disabled'}" onclick="${cardClick}">
+    <div class="tw-head">
+      <div class="tw-avatar ${halo}">${escText(it.icon || (isRadar ? '🔭' : '🚰'))}</div>
+      <div class="tw-name-wrap">
+        <div class="tw-name">${escText(it.name)}</div>
+        <div class="tw-status ${stCls}">${escText(stText)}</div>
+      </div>
+      <button class="sense-info-btn" onclick="event.stopPropagation();piSenseOutput('${escText(section)}','${escText(it.id)}','${escText(out.path||'')}','${escText(out.type||'log')}')" title="查看最新产出">详情</button>
+      <button class="toggle${it.enabled?' on':''}" onclick="event.stopPropagation();piSenseToggle('${escText(section)}','${escText(it.id)}',${!it.enabled})" title="${it.enabled?'点击禁用':'点击启用'}"></button>
+    </div>
+    ${descLine}
+    ${foot}
+  </div>`;
+}
+
+// 跨 frame 调 parent（pios-home）的 sense modal 函数；parent 的 senseState.data 已在 renderSenseInPi 时同步
+function piSenseToggle(section, id, next) {
+  if (window.parent && typeof window.parent.senseToggleEnabled === 'function') {
+    window.parent.senseToggleEnabled(section, id, next).then(() => renderSenseInPi());
+  }
+}
+// piSenseConfig 已废弃（2026-04-28）：配置入口统一去 Tasks/Agents，详情按钮改成看产出
+// piSenseOutput → 父窗口 senseViewOutput（真实存在；曾经误指 senseOpenLatestOutput 父窗口未实现）
+// ⚠ 别回退成 senseOpenLatestOutput——pios-home.html 里没那个函数
+function piSenseOutput(section, id, path, type) {
+  if (window.parent && typeof window.parent.senseViewOutput === 'function') {
+    window.parent.senseViewOutput(section, id, path, type);
+  }
+}
+function piNewRadar() {
+  if (window.parent && typeof window.parent.senseOpenNewRadar === 'function') {
+    window.parent.senseOpenNewRadar();
+  }
+}
+
+// ── Owner pane (Profile 认知层) ──
+let _ownerData = null;
+
+async function loadOwnerPane(force) {
+  const container = document.getElementById('pi-owner-content');
+  if (!container) return;
+  if (!force && _ownerData) { renderOwnerPane(_ownerData); return; }
+  container.innerHTML = '<div style="color:var(--dim);font-size:12px">加载中…</div>';
+  try {
+    const r = await fetch('/pios/profile?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    _ownerData = await r.json();
+    renderOwnerPane(_ownerData);
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--orange);font-size:12px">加载失败：${esc(e.message)}</div>`;
+  }
+}
+
+function renderOwnerPane(data) {
+  const container = document.getElementById('pi-owner-content');
+  if (!container) return;
+  container.style.padding = '0';
+
+  const pending = data.pending || [];
+  const files = data.files || [];
+  const ownerName = data.ownerName || 'Owner';
+
+  // File catalog — parameterized by owner name, group: 0=必读 1=按需 2=查询 3=健康 -1=隐藏
+  const FILE_META = {
+    [`${ownerName}_Profile.md`]:       { desc: '核心画像：身份、性格、价值观、沟通偏好', group: 0 },
+    [`${ownerName}_Beliefs.md`]:       { desc: '哲学框架与世界观', group: 1 },
+    [`${ownerName}_Patterns.md`]:      { desc: '思维模式、决策习惯、语言风格', group: 1 },
+    [`${ownerName}_Timeline.md`]:      { desc: '人生时间线', group: 2 },
+    [`${ownerName}_People.md`]:        { desc: '关系图谱：核心人物及关系', group: 2 },
+    [`${ownerName}_Knowledge_Map.md`]: { desc: '全 Vault 主题导航', group: 2 },
+    [`${ownerName}_Health.md`]:        { desc: '健康数据', group: 3 },
+    'supplements.md':                  { desc: '补剂追踪', group: 3 },
+  };
+  const GROUPS = [
+    { id: 0, label: '必读', sub: 'Pi 每次对话都读' },
+    { id: 1, label: '按需', sub: '深入理解时读' },
+    { id: 2, label: '查询', sub: '具体事实' },
+    { id: 3, label: '健康', sub: '' },
+  ];
+
+  const recentMtime = files.reduce((m, f) => (!m || f.mtime > m) ? f.mtime : m, '');
+  const recentDays = recentMtime ? Math.floor((Date.now() - new Date(recentMtime)) / 86400000) : null;
+
+  // ── Header ──
+  let html = `<div style="display:flex;align-items:center;gap:8px;padding:8px 16px 9px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+    <span style="font-size:14px;font-weight:700;color:var(--text)">👤 ${esc(ownerName)}</span>
+    <span style="font-size:10px;color:var(--dim)">${files.length} 个文件</span>
+    ${recentDays !== null ? `<span style="font-size:10px;color:var(--dim)">· ${recentDays === 0 ? '今天更新' : recentDays + 'd 前更新'}</span>` : ''}
+    ${pending.length > 0 ? `<span style="font-size:10px;padding:1px 7px;border-radius:8px;background:rgba(240,180,41,.18);color:#d4a017;font-weight:600">● ${pending.length} 待审批</span>` : ''}
+    <span style="flex:1"></span>
+    <button onclick="__ownerNewPage()" style="font-size:11px;padding:2px 9px;border-radius:4px;border:1px dashed rgba(74,158,255,0.5);background:rgba(74,158,255,0.06);color:var(--blue);cursor:pointer;font-family:inherit">+ 新建</button>
+    <button onclick="__ownerRefresh(this)" style="font-size:11px;padding:2px 9px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit">🔄 刷新</button>
+  </div>`;
+
+  html += `<div style="padding:10px 16px 12px">`;
+
+  // ── Level groups ──
+  for (const g of GROUPS) {
+    const gFiles = files.filter(f => (FILE_META[f.name] || {}).group === g.id);
+    if (!gFiles.length) continue;
+    html += `<div style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px">${g.label}${g.sub ? `<span style="font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px;color:var(--dim)">${g.sub}</span>` : ''}</div>`;
+    for (const f of gFiles) {
+      const meta = FILE_META[f.name] || {};
+      const daysAgo = Math.floor((Date.now() - new Date(f.mtime)) / 86400000);
+      let displayName = f.name.replace(/\.md$/, '').replace(/_/g, ' ');
+      const pfx = ownerName + ' ';
+      if (displayName.startsWith(pfx)) displayName = displayName.slice(pfx.length);
+      const fIdx = files.findIndex(x => x.name === f.name);
+      html += `<div class="ow-file-item" id="owf-${fIdx}">
+        <div class="ow-file-head" onclick="__ownerToggleFile(${fIdx},'${esc(f.name)}',this)">
+          <span class="ow-file-name">${esc(displayName)}</span>
+          ${meta.desc ? `<span class="ow-file-desc">${esc(meta.desc)}</span>` : '<span class="ow-file-desc"></span>'}
+          <span class="ow-file-meta">${daysAgo === 0 ? '今天' : daysAgo + 'd'}</span>
+          <button onclick="event.stopPropagation();__ownerEditFile('${esc(f.name)}')" class="ow-file-edit-btn">✎</button>
+          <span class="ow-file-toggle">▶</span>
+        </div>
+        <div class="ow-file-body md-wrap" id="owfbody-${fIdx}"></div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  // ── Unlisted files ──
+  const listedNames = new Set(Object.keys(FILE_META));
+  const unlisted = files.filter(f => !listedNames.has(f.name));
+  if (unlisted.length) {
+    html += `<div style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px">其他</div>`;
+    for (const f of unlisted) {
+      const daysAgo = Math.floor((Date.now() - new Date(f.mtime)) / 86400000);
+      let displayName = f.name.replace(/\.md$/, '').replace(/_/g, ' ');
+      const fIdx = files.findIndex(x => x.name === f.name);
+      html += `<div class="ow-file-item" id="owf-${fIdx}">
+        <div class="ow-file-head" onclick="__ownerToggleFile(${fIdx},'${esc(f.name)}',this)">
+          <span class="ow-file-name">${esc(displayName)}</span>
+          <span class="ow-file-desc"></span>
+          <span class="ow-file-meta">${daysAgo === 0 ? '今天' : daysAgo + 'd'}</span>
+          <button onclick="event.stopPropagation();__ownerEditFile('${esc(f.name)}')" class="ow-file-edit-btn">✎</button>
+          <span class="ow-file-toggle">▶</span>
+        </div>
+        <div class="ow-file-body md-wrap" id="owfbody-${fIdx}"></div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  // ── Diffs at bottom, collapsible ──
+  const diffOpen = pending.length > 0;
+  html += `<div style="border-top:1px solid var(--border);margin-top:4px;padding-top:6px">
+    <div onclick="__ownerToggleDiffs(this)" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 0;user-select:none">
+      <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Profile 更新建议</span>
+      ${pending.length > 0
+        ? `<span style="font-size:9px;padding:1px 6px;border-radius:8px;background:rgba(240,180,41,.18);color:#d4a017;font-weight:600">${pending.length}</span>
+           <button onclick="event.stopPropagation();__ownerApproveAll()" style="font-size:10px;padding:1px 8px;border:1px solid rgba(74,158,255,.4);background:rgba(74,158,255,.06);color:var(--blue);border-radius:3px;cursor:pointer;font-family:inherit">全部批准</button>`
+        : `<span style="font-size:10px;color:var(--green)">✓ 无待审批</span>`}
+      <span style="flex:1"></span>
+      <span class="ow-diff-toggle" style="font-size:10px;color:var(--dim)">${diffOpen ? '▼' : '▶'}</span>
+    </div>
+    <div id="ow-diffs-body" ${diffOpen ? '' : 'style="display:none"'}>`;
+
+  if (pending.length === 0) {
+    html += `<div style="font-size:12px;color:var(--dim);padding:4px 0 8px">暂无待审批条目 — 下次 profile-refresh 后自动生成</div>`;
+  } else {
+    for (const item of pending) {
+      const typeLabel = {update:'改', add:'增', remove:'删'}[item.type] || item.type || '';
+      const typeColor = item.type === 'add' ? 'var(--green)' : item.type === 'remove' ? 'var(--orange)' : 'var(--blue)';
+      html += `<div id="owdiff-${esc(item.id)}" style="background:var(--bg2);border-radius:5px;padding:8px 10px;margin-bottom:6px">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--text);font-weight:500">${esc(item.file||'')}</span>
+          ${item.section ? `<span style="font-size:10px;color:var(--muted)">${esc(item.section)}</span>` : ''}
+          <span style="font-size:9px;padding:1px 5px;border:1px solid ${typeColor};color:${typeColor};border-radius:3px">${typeLabel}</span>
+          ${item.field ? `<span style="font-size:10px;color:var(--dim)">${esc(item.field)}</span>` : ''}
+        </div>
+        ${item.reason ? `<div style="font-size:11px;color:var(--muted);margin-bottom:4px">${esc(item.reason)}</div>` : ''}
+        ${item.source ? `<div style="font-size:10px;color:var(--dim);margin-bottom:4px">📎 ${esc(item.source)}</div>` : ''}
+        ${(item.old || item.new) ? `<div style="font-size:11px;font-family:'SF Mono',Menlo,monospace;background:var(--bg3);border-radius:3px;padding:4px 6px;margin-bottom:6px">
+          ${item.old ? `<div style="color:var(--orange)">- ${esc(item.old)}</div>` : ''}
+          ${item.new ? `<div style="color:var(--green)">+ ${esc(item.new)}</div>` : ''}
+        </div>` : ''}
+        <div style="display:flex;gap:6px">
+          <button onclick="__ownerApprove('${esc(item.id)}',this)" style="font-size:11px;padding:2px 10px;border:1px solid rgba(74,158,255,.4);background:rgba(74,158,255,.06);color:var(--blue);border-radius:3px;cursor:pointer;font-family:inherit">✓ 批准</button>
+          <button onclick="__ownerReject('${esc(item.id)}',this)" style="font-size:11px;padding:2px 10px;border:1px solid rgba(255,140,66,.3);background:rgba(255,140,66,.05);color:var(--orange);border-radius:3px;cursor:pointer;font-family:inherit">✗ 拒绝</button>
+        </div>
+      </div>`;
+    }
+  }
+  html += `</div></div>`;  // close diffs body + diffs wrapper
+  html += `</div>`;        // close content padding div
+
+  container.innerHTML = html;
+}
+
+window.__ownerNewPage = function() { window.__profileNewDialog && window.__profileNewDialog(); };
+window.__ownerRefresh = async function(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try { await fetch('/pios/profile/refresh-now', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); } catch {}
+  _ownerData = null;
+  await loadOwnerPane(true);
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 刷新'; }
+};
+window.__ownerApprove = async function(id, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const r = await fetch('/pios/profile/approve', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'unknown');
+    _ownerData = null; await loadOwnerPane(true);
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = '✓ 批准'; }
+    alert('批准失败：' + e.message);
+  }
+};
+window.__ownerReject = async function(id, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  try {
+    const r = await fetch('/pios/profile/reject', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'unknown');
+    _ownerData = null; await loadOwnerPane(true);
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = '✗ 拒绝'; }
+    alert('拒绝失败：' + e.message);
+  }
+};
+window.__ownerApproveAll = async function() {
+  try {
+    const r = await fetch('/pios/profile/approve-all', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const j = await r.json();
+    _ownerData = null; await loadOwnerPane(true);
+    if (j.failed > 0) alert(j.applied + ' 条已批准，' + j.failed + ' 条失败');
+  } catch (e) { alert('批量批准失败：' + e.message); }
+};
+window.__ownerToggleDiffs = function(headerEl) {
+  const body = document.getElementById('ow-diffs-body');
+  const toggle = headerEl.querySelector('.ow-diff-toggle');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  if (toggle) toggle.textContent = isOpen ? '▶' : '▼';
+};
+window.__ownerToggleFile = async function(i, name, headEl) {
+  const body = document.getElementById('owfbody-' + i);
+  if (!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  const arrow = headEl.querySelector('.ow-file-toggle');
+  if (arrow) arrow.textContent = isOpen ? '▶' : '▼';
+  if (!isOpen && !body.dataset.loaded) {
+    body.dataset.loaded = '1';
+    body.innerHTML = '<div style="font-size:11px;color:var(--dim);padding:4px">加载中…</div>';
+    try {
+      const r = await fetch('/pios/profile/file?name=' + encodeURIComponent(name));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      body.innerHTML = md2html(d.content || '（空文件）');
+    } catch (e) {
+      body.innerHTML = `<div style="color:var(--orange);font-size:11px">加载失败：${esc(e.message)}</div>`;
+    }
+  }
+};
+window.__ownerEditFile = async function(name) {
+  let content = '';
+  try {
+    const r = await fetch('/pios/profile/file?name=' + encodeURIComponent(name));
+    const d = await r.json();
+    content = d.content || '';
+  } catch {}
+  const overlay = document.createElement('div');
+  overlay.className = 'ow-edit-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+  overlay.onclick = (ev) => { if (ev.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `<div style="background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:16px;max-width:600px;width:92%;max-height:85vh;display:flex;flex-direction:column;gap:10px">
+    <div style="font-size:13px;color:var(--text);font-weight:600">编辑 ${esc(name.replace(/\.md$/,''))}</div>
+    <textarea id="ow-edit-ta" style="flex:1;min-height:320px;background:var(--bg2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:10px;font-family:'SF Mono',Menlo,monospace;font-size:12px;line-height:1.5;resize:vertical">${esc(content)}</textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="this.closest('.ow-edit-overlay').remove()" style="padding:5px 14px;border:1px solid var(--border2);background:transparent;color:var(--muted);border-radius:5px;cursor:pointer;font-family:inherit;font-size:12px">取消</button>
+      <button id="ow-edit-save-btn" style="padding:5px 14px;border:none;background:var(--blue);color:white;border-radius:5px;cursor:pointer;font-family:inherit;font-size:12px">✓ 保存</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#ow-edit-save-btn').onclick = async function() {
+    const btn = this;
+    const ta = overlay.querySelector('#ow-edit-ta');
+    btn.disabled = true; btn.textContent = '保存中…';
+    try {
+      const r = await fetch('/pios/profile/save', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name, content: ta.value})});
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || 'unknown');
+      overlay.remove();
+      _ownerData = null; await loadOwnerPane(true);
+    } catch (e) {
+      btn.disabled = false; btn.textContent = '✓ 保存';
+      alert('保存失败：' + e.message);
+    }
+  };
+};
+
+document.getElementById('refresh-btn').addEventListener('click',load);
+load();
+setInterval(loadContextUsage, 30000);
+</script>
+</body>
+</html>
