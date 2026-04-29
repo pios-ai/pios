@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html><head><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,system-ui,sans-serif;background:rgba(30,30,30,0.97);color:#eee;display:flex;flex-direction:column;min-height:100vh;padding:20px;gap:12px;box-sizing:border-box}
+h3{font-size:14px;font-weight:600;color:#aaa;margin-bottom:4px}
+.field{display:flex;flex-direction:column;gap:6px}
+label{font-size:12px;color:#888}
+input{background:#2a2a2a;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;font-size:13px;padding:8px 10px;outline:none}
+input:focus{border-color:#4a9eff}
+.btns{display:flex;gap:8px;margin-top:4px}
+button{flex:1;padding:8px;border-radius:6px;border:none;font-size:13px;cursor:pointer}
+.ok{background:#4a9eff;color:#fff}
+.ok:hover{opacity:0.85}
+.cancel{background:#3a3a3a;color:#aaa}
+.cancel:hover{background:#444}
+</style></head><body>
+<h3 id="host-label">登录</h3>
+<div class="field">
+  <label>用户名</label>
+  <input id="u" type="text" autocomplete="username">
+</div>
+<div class="field">
+  <label>密码</label>
+  <input id="p" type="password" autocomplete="current-password">
+</div>
+<div class="btns">
+  <button class="cancel" id="cancel">取消</button>
+  <button class="ok" id="ok">确定</button>
+</div>
+<script>
+const { ipcRenderer } = require('electron');
+const uEl = document.getElementById('u');
+const pEl = document.getElementById('p');
+const params = new URLSearchParams(window.location.search);
+document.getElementById('host-label').textContent = '登录 — ' + (params.get('host') || '');
+
+function submit() {
+  const u = uEl.value.trim();
+  ipcRenderer.send('auth-dialog:submit', { u, p: pEl.value });
+}
+document.getElementById('ok').onclick = submit;
+document.getElementById('cancel').onclick = () => ipcRenderer.send('auth-dialog:cancel');
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); submit(); }
+  if (e.key === 'Escape') { e.preventDefault(); ipcRenderer.send('auth-dialog:cancel'); }
+});
+uEl.focus();
+</script>
+</body></html>

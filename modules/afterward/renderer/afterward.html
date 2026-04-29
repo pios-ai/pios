@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
+  <title>Afterward</title>
+  <link rel="stylesheet" href="afterward.css">
+</head>
+<body class="locked">
+
+  <!-- ─── Lock screen ─────────────────────────────────────── -->
+  <div id="lock-screen" class="screen">
+    <div class="lock-card">
+      <h1 class="brand">Afterward</h1>
+      <p class="subtitle" data-i18n="afterward.lock.subtitle">你的延续，在之后。</p>
+      <input
+        type="password"
+        id="lock-password"
+        data-i18n-placeholder="afterward.lock.input_ph"
+        placeholder="主密码"
+        autocomplete="off"
+        autofocus />
+      <button id="lock-submit" data-i18n="afterward.lock.submit">解锁</button>
+      <button id="touchid-unlock-btn" class="touchid-btn hidden" data-i18n="afterward.lock.touchid_btn">🖐 用 Touch ID 解锁</button>
+      <p class="lock-error" id="lock-error"></p>
+      <p class="hint" data-i18n="afterward.lock.hint" id="lock-hint">Touch ID v0.5 支持。</p>
+      <div class="lang-toggle lang-toggle-lock" title="语言 / Language">
+        <span class="lang-opt" data-lang="zh-CN">中</span>
+        <span class="lang-sep">|</span>
+        <span class="lang-opt" data-lang="en">EN</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Onboarding wizard ─────────────────────────────── -->
+  <div id="onboard-screen" class="screen hidden">
+    <div class="onboard-card">
+      <h1 class="brand">Afterward</h1>
+      <p class="subtitle" data-i18n="afterward.onboard.subtitle">让我们设置你的延续。</p>
+
+      <!-- Step 1: intro -->
+      <div class="onboard-step" data-step="1">
+        <h3 data-i18n="afterward.onboard.step1.title">第 1 步 / 共 4 步 · 这是做什么的</h3>
+        <p class="explainer" data-i18n-html="afterward.onboard.step1.body">
+          你将设定一个<strong>主密码</strong>，列出 <strong>5 位受托人</strong>，
+          我们会把密码拆成 5 份密码学分片（任意 3 份可重组出完整密码）。
+          你写的内容一直加密，直到：你连续静默 150 天 <em>且</em> 3 位受托人确认你已不在。
+        </p>
+        <p class="explainer warn-box" data-i18n-html="afterward.onboard.step1.warning">
+          ⚠ 你的主密码<strong>永远不会被保存在本机任何位置</strong>。
+          如果你忘了密码，且没有足够的受托人分片可恢复，你的内容将永久丢失。
+          这是刻意设计的。
+        </p>
+        <button class="onboard-next" data-next="2" data-i18n="afterward.onboard.step1.cta">开始 →</button>
+      </div>
+
+      <!-- Step 2: password -->
+      <div class="onboard-step hidden" data-step="2">
+        <h3 data-i18n="afterward.onboard.step2.title">第 2 步 / 共 4 步 · 主密码</h3>
+        <p class="explainer" data-i18n="afterward.onboard.step2.body">
+          这是你唯一需要记住的密码。建议用一个长（20+ 字符）、好记的句子或短语。
+          需要的话可以写下来放在安全的地方。
+        </p>
+        <input type="password" id="onboard-pwd1"
+               data-i18n-placeholder="afterward.onboard.step2.pwd1_ph"
+               placeholder="主密码（建议 20+ 字符）" autocomplete="off" />
+        <input type="password" id="onboard-pwd2"
+               data-i18n-placeholder="afterward.onboard.step2.pwd2_ph"
+               placeholder="再输一次确认" autocomplete="off" />
+        <p class="lock-error" id="onboard-pwd-error"></p>
+        <div class="onboard-buttons">
+          <button class="secondary" data-prev="1" data-i18n="afterward.onboard.back">← 返回</button>
+          <button id="onboard-pwd-next" data-i18n="afterward.onboard.step2.next">下一步 →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: trustees -->
+      <div class="onboard-step hidden" data-step="3">
+        <h3 data-i18n="afterward.onboard.step3.title">第 3 步 / 共 4 步 · 5 位受托人</h3>
+        <p class="explainer" data-i18n="afterward.onboard.step3.body">
+          5 位你信任的人。任意 3 位可以共同确认你的离去并重组出你的密码。
+          单一受托人无法独自解密。
+        </p>
+        <div id="trustee-rows"></div>
+        <p class="lock-error" id="onboard-trustee-error"></p>
+        <div class="onboard-buttons">
+          <button class="secondary" data-prev="2" data-i18n="afterward.onboard.back">← 返回</button>
+          <button id="onboard-trustee-next" data-i18n="afterward.onboard.step3.cta">生成分片 →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: shares -->
+      <div class="onboard-step hidden" data-step="4">
+        <h3 data-i18n="afterward.onboard.step4.title">第 4 步 / 共 4 步 · 分发分片</h3>
+        <p class="explainer" data-i18n-html="afterward.onboard.step4.body">
+          <strong>重要：</strong>复制下面每一份分片，交给对应的受托人
+          （U 盘 / 纸上 QR / 加密邮件）。继续后本屏幕会清空 ——
+          <strong>你不会再看到这些分片</strong>。
+        </p>
+        <div id="shares-list"></div>
+        <label class="confirm-check">
+          <input type="checkbox" id="shares-distributed" />
+          <span data-i18n="afterward.onboard.step4.confirm">我已把所有分片交给对应受托人，本机未保存任何副本。</span>
+        </label>
+        <button id="onboard-finish" disabled data-i18n="afterward.onboard.step4.finish">完成设置</button>
+      </div>
+
+      <p class="lock-error" id="onboard-error"></p>
+    </div>
+  </div>
+
+  <!-- ─── Main app (hidden until unlocked) ──────────────── -->
+  <div id="app" class="hidden">
+    <header class="topbar">
+      <span class="brand-small">Afterward</span>
+      <nav class="tabs">
+        <button class="tab active" data-tab="home" data-i18n="afterward.nav.home">首页</button>
+        <button class="tab" data-tab="heartbeat" data-i18n="afterward.nav.heartbeat">心跳</button>
+        <button class="tab" data-tab="vault" data-i18n="afterward.nav.vault">保险柜</button>
+        <button class="tab" data-tab="actions" data-i18n="afterward.nav.actions">指令</button>
+        <button class="tab" data-tab="missions" data-i18n="afterward.nav.missions">使命</button>
+        <button class="tab" data-tab="trustees" data-i18n="afterward.nav.trustees">受托人</button>
+        <button class="tab" data-tab="drill" data-i18n="afterward.nav.drill">演习</button>
+        <button class="tab" data-tab="audit" data-i18n="afterward.nav.audit">审计</button>
+      </nav>
+      <div class="lang-toggle" title="语言 / Language">
+        <span class="lang-opt" data-lang="zh-CN">中</span>
+        <span class="lang-sep">|</span>
+        <span class="lang-opt" data-lang="en">EN</span>
+      </div>
+      <button id="lock-now" class="lock-now-btn" data-i18n="afterward.app.lock_btn">锁定</button>
+    </header>
+
+    <main class="content">
+
+      <!-- Home -->
+      <section class="panel" data-panel="home">
+        <h2 data-i18n="afterward.home.title">状态</h2>
+        <div id="status-card" class="status-card">
+          <div class="status-row">
+            <span class="label" data-i18n="afterward.home.status_label">当前状态</span>
+            <span class="value" id="status-state">—</span>
+          </div>
+          <div class="status-row">
+            <span class="label" data-i18n="afterward.home.last_challenge">上次挑战通过</span>
+            <span class="value" id="status-last-challenge">—</span>
+          </div>
+          <div class="status-row">
+            <span class="label" data-i18n="afterward.home.passive">距上次心跳</span>
+            <span class="value" id="status-days-passive">—</span>
+          </div>
+          <div class="status-row">
+            <span class="label" data-i18n="afterward.home.trustee_confirm">受托人确认</span>
+            <span class="value" id="status-trustees">—</span>
+          </div>
+          <div class="status-row">
+            <span class="label" data-i18n="afterward.home.compression">时间压缩</span>
+            <span class="value" id="status-compression">—</span>
+          </div>
+        </div>
+        <div class="actions-bar">
+          <button id="refresh-status" data-i18n="afterward.home.refresh">刷新</button>
+          <button id="check-state-btn" class="secondary" data-i18n="afterward.home.check_state">触发 check_state</button>
+        </div>
+
+        <!-- Pi authorization sub-section -->
+        <div class="pi-auth-block">
+          <h3 data-i18n="afterward.piauth.title">授权 Pi 读取 vault</h3>
+          <p class="explainer" data-i18n-html="afterward.piauth.explainer">
+            生成一个**时效 token**（默认 30 分钟）给 Pi / Claude Code / 其他外部工具用。
+            Token 只是凭证 —— 密码永远留在 Afterward 里不外传。
+            你在 Pi 对话里粘贴 token（<strong>不是密码</strong>），Pi 拿 token 调 HTTP API 读写 vault。
+            Token 过期、你 Lock 或关闭 Afterward 时自动失效。
+          </p>
+
+          <div class="pi-auth-form">
+            <div class="pi-auth-controls">
+              <label class="pi-auth-row">
+                <span data-i18n="afterward.piauth.scope">权限</span>
+                <select id="pi-auth-scope">
+                  <option value="read" data-i18n="afterward.piauth.scope_read">只读</option>
+                  <option value="read_write" data-i18n="afterward.piauth.scope_rw">读 + 写</option>
+                </select>
+              </label>
+              <label class="pi-auth-row">
+                <span data-i18n="afterward.piauth.ttl">有效时长</span>
+                <select id="pi-auth-ttl">
+                  <option value="600">10 min</option>
+                  <option value="1800" selected>30 min</option>
+                  <option value="3600">1 hour</option>
+                  <option value="7200">2 hours</option>
+                  <option value="86400">24 hours</option>
+                </select>
+              </label>
+              <label class="pi-auth-row pi-auth-row-wide">
+                <span data-i18n="afterward.piauth.label">备注</span>
+                <input type="text" id="pi-auth-label" data-i18n-placeholder="afterward.piauth.label_ph" placeholder="备注（给你自己看的）" />
+              </label>
+              <button id="pi-auth-generate" data-i18n="afterward.piauth.generate">生成 Token</button>
+            </div>
+            <div id="pi-auth-new-token" class="hidden"></div>
+          </div>
+
+          <h4 class="pi-auth-subheading" data-i18n="afterward.piauth.active_title">当前活跃 token</h4>
+          <div id="pi-auth-list" class="pi-auth-list" data-i18n="afterward.common.loading">加载中…</div>
+        </div>
+      </section>
+
+      <!-- Heartbeat / Daily Challenge -->
+      <section class="panel hidden" data-panel="heartbeat">
+        <h2 data-i18n="afterward.heartbeat.title">每日挑战</h2>
+        <p class="explainer" data-i18n="afterward.heartbeat.explainer">
+          输入主密码，证明你还活着。这是唯一能把 SOFT_INVESTIGATION 状态重置回 ALIVE 的操作，
+          也是攻击者无法伪造的唯一凭证（因为他没有你的密码）。
+        </p>
+        <input type="password" id="challenge-password"
+               data-i18n-placeholder="afterward.heartbeat.input_ph"
+               placeholder="主密码"
+               autocomplete="off" />
+        <button id="challenge-submit" data-i18n="afterward.heartbeat.submit">签名挑战</button>
+        <p id="challenge-result" class="result"></p>
+
+        <!-- Touch ID sub-section -->
+        <div class="touchid-block">
+          <h3 data-i18n="afterward.touchid.title">Touch ID 快速解锁</h3>
+          <p class="explainer" data-i18n="afterward.touchid.explainer">
+            启用后下次开 Afterward 直接按指纹解锁，不用输密码。密码用 macOS Keychain 加密保存；
+            每次解锁都要求 Touch ID 验证。如果主密码改了，Touch ID 会自动失效。
+          </p>
+          <div id="touchid-status" class="result"></div>
+          <div class="actions-bar">
+            <button id="touchid-enable-btn" class="hidden" data-i18n="afterward.touchid.enable">启用 Touch ID</button>
+            <button id="touchid-disable-btn" class="secondary hidden" data-i18n="afterward.touchid.disable">关闭 Touch ID</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vault -->
+      <section class="panel hidden" data-panel="vault">
+        <div class="vault-layout">
+          <div class="vault-sidebar">
+            <h2 data-i18n="afterward.vault.title">保险柜</h2>
+            <button id="vault-new-btn" class="vault-new-btn" data-i18n="afterward.vault.new_btn">+ 新建加密笔记</button>
+            <div class="vault-list" id="vault-list" data-i18n="afterward.common.loading">加载中…</div>
+          </div>
+          <div class="vault-editor hidden" id="vault-editor">
+            <div class="editor-header">
+              <input type="text" id="editor-path"
+                     data-i18n-placeholder="afterward.vault.path_ph"
+                     placeholder="letters/someone.md.enc" />
+              <div class="editor-actions">
+                <button id="editor-save" data-i18n="afterward.vault.save">保存</button>
+                <button id="editor-close" class="secondary" data-i18n="afterward.vault.close">关闭</button>
+              </div>
+            </div>
+            <textarea id="editor-content"
+                      data-i18n-placeholder="afterward.vault.content_ph"
+                      placeholder="在此写下内容。保存时使用你的主密码 AES-256-GCM 加密。"></textarea>
+            <p id="editor-result" class="result"></p>
+          </div>
+          <div class="vault-placeholder" id="vault-placeholder">
+            <p class="explainer" data-i18n="afterward.vault.explainer">
+              你的加密文档。AES-256-GCM，兼容 Obsidian Vault Encryptor 插件。
+            </p>
+            <p class="hint" data-i18n="afterward.vault.hint">点击左侧文件打开，或点 + 新建加密笔记 开始写。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <section class="panel hidden" data-panel="actions">
+        <h2 data-i18n="afterward.actions.title">指令</h2>
+        <p class="explainer" data-i18n-html="afterward.actions.explainer">
+          死亡确认后执行的一次性投递。每条指令是一个
+          <code>what / to / via / when</code> 四元组。Daemon 解析此 YAML，
+          把加密 vault 里的内容通过指定渠道送给指定收件人。
+        </p>
+        <div class="yaml-editor-header">
+          <span id="actions-meta" class="yaml-meta">—</span>
+          <div>
+            <button id="actions-reload" class="secondary" data-i18n="afterward.actions.reload">重载</button>
+            <button id="actions-save" data-i18n="afterward.actions.save">保存</button>
+          </div>
+        </div>
+        <textarea id="actions-yaml" class="yaml-textarea" placeholder="YAML (actions 段)"></textarea>
+        <p id="actions-result" class="result"></p>
+      </section>
+
+      <!-- Missions -->
+      <section class="panel hidden" data-panel="missions">
+        <h2 data-i18n="afterward.missions.title">使命</h2>
+        <p class="explainer" data-i18n-html="afterward.missions.explainer">
+          你离开后 Pi 长期承担的使命。跟"指令"（一次性）不同，使命是永续的。
+          每条有 <em>为谁</em>、<em>如何触发</em>、<em>预算</em> 和可选的 <em>升级路径</em>。
+        </p>
+        <div class="yaml-editor-header">
+          <span id="missions-meta" class="yaml-meta">—</span>
+          <div>
+            <button id="missions-reload" class="secondary" data-i18n="afterward.missions.reload">重载</button>
+            <button id="missions-save" data-i18n="afterward.missions.save">保存</button>
+          </div>
+        </div>
+        <textarea id="missions-yaml" class="yaml-textarea" placeholder="YAML (missions 段)"></textarea>
+        <p id="missions-result" class="result"></p>
+      </section>
+
+      <!-- Trustees -->
+      <section class="panel hidden" data-panel="trustees">
+        <h2 data-i18n="afterward.trustees.title">受托人</h2>
+        <p class="explainer" data-i18n="afterward.trustees.explainer">
+          5 位持有你 Shamir 分片的人。你离开后任意 3 位可以重组出 vault 主密钥。
+          你独自持有完整密码 —— 这里没有任何人知道它。
+        </p>
+        <div id="trustees-grid" class="trustees-grid" data-i18n="afterward.trustees.loading">加载中…</div>
+        <p class="hint" data-i18n-html="afterward.trustees.hint">联系方式编辑 + 心跳状态 v0.5 支持。暂时如需更新可直接编辑
+          <code>trustees-meta.json</code>。</p>
+
+        <!-- Change password sub-section -->
+        <div class="pwd-change-block">
+          <h3 data-i18n="afterward.pwdchange.title">修改主密码</h3>
+          <p class="explainer" data-i18n="afterward.pwdchange.explainer">
+            修改后所有 vault 文件会用新密码重新加密，并生成 5 份新 Shamir 分片。
+            如果你已把旧分片分发给 trustee，修改后必须把**新分片**重新发给他们 ——
+            旧分片作废。
+          </p>
+          <div class="pwd-change-form">
+            <input type="password" id="pwd-old" data-i18n-placeholder="afterward.pwdchange.old_ph" placeholder="旧密码" />
+            <input type="password" id="pwd-new" data-i18n-placeholder="afterward.pwdchange.new_ph" placeholder="新密码（至少 6 字符）" />
+            <input type="password" id="pwd-new2" data-i18n-placeholder="afterward.pwdchange.confirm_ph" placeholder="再输一次新密码" />
+            <button id="pwd-change-btn" data-i18n="afterward.pwdchange.submit">修改密码</button>
+          </div>
+          <p id="pwd-change-result" class="result"></p>
+          <div id="pwd-change-new-shares" class="hidden" style="margin-top:16px;"></div>
+        </div>
+      </section>
+
+      <!-- Drill -->
+      <section class="panel hidden" data-panel="drill">
+        <h2 data-i18n="afterward.drill.title">演习</h2>
+        <p class="explainer" data-i18n="afterward.drill.explainer">
+          在隔离环境跑一次完整生命周期：ALIVE → SOFT → DEATH，约 2 秒完成
+          （时间压缩 8,640,000×，1 现实秒 = 100 虚拟天）。
+          端到端测试 daemon，不影响你真实的 vault。
+        </p>
+        <div class="actions-bar">
+          <button id="drill-run-btn" data-i18n="afterward.drill.start_btn">▶ 开始演习</button>
+        </div>
+        <div id="drill-output" class="drill-output hidden"></div>
+        <p id="drill-result" class="result"></p>
+      </section>
+
+      <!-- Audit -->
+      <section class="panel hidden" data-panel="audit">
+        <h2 data-i18n="afterward.audit.title">审计日志</h2>
+        <p class="explainer" data-i18n="afterward.audit.explainer">
+          Daemon 的每个事件，按时间倒序排列。你不在后受托人会看到同一份日志 ——
+          这是 Afterward 为你做了哪些事的防篡改记录。
+        </p>
+        <div class="actions-bar">
+          <button id="audit-reload" class="secondary" data-i18n="afterward.audit.reload">重载</button>
+          <span id="audit-meta" class="yaml-meta" style="align-self:center"></span>
+        </div>
+        <div id="audit-list" class="audit-list" data-i18n="afterward.common.loading">加载中…</div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="afterward.js"></script>
+</body>
+</html>

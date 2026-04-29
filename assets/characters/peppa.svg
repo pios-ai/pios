@@ -1,0 +1,71 @@
+<svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="peppaHeadGrad" cx="45%" cy="35%" r="65%">
+          <stop offset="0%"  stop-color="#FFDCE8"/>
+          <stop offset="55%" stop-color="#FFB9D2"/>
+          <stop offset="100%" stop-color="#E598B5"/>
+        </radialGradient>
+        <linearGradient id="peppaDressGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%"  stop-color="#FF5C5C"/>
+          <stop offset="100%" stop-color="#C92929"/>
+        </linearGradient>
+      </defs>
+      <!-- 耳朵（左右两个小三角，顶部）-->
+      <path d="M 30 12 L 33 2 L 39 13 Z"
+        fill="#FFB9D2" stroke="#B35779" stroke-width="1.4" stroke-linejoin="round"/>
+      <path d="M 52 8 L 56 0 L 61 10 Z"
+        fill="#FFB9D2" stroke="#B35779" stroke-width="1.4" stroke-linejoin="round"/>
+      <!-- 头部主体：经典吹风机侧脸（左头后 + 右吻突 + 下鼓腮）-->
+      <path class="body" d="
+        M 22 18
+        Q 14 26 16 38
+        Q 18 48 30 52
+        L 50 53
+        Q 60 53 64 48
+        L 76 47
+        Q 84 46 84 38
+        Q 84 31 76 30
+        L 64 29
+        Q 60 23 56 20
+        Q 50 12 40 11
+        Q 28 11 22 18 Z"
+        fill="url(#peppaHeadGrad)" stroke="#B35779" stroke-width="2.2" stroke-linejoin="round"/>
+      <!-- 吻端两个鼻孔 -->
+      <ellipse cx="77" cy="34" rx="1.4" ry="1.9" fill="#7A2D48"/>
+      <ellipse cx="77" cy="40" rx="1.4" ry="1.9" fill="#7A2D48"/>
+      <!-- 左眼（靠前额）-->
+      <g class="eye-l">
+        <circle cx="46" cy="26" r="4.3" fill="#fff" stroke="#1a1a2a" stroke-width="1"/>
+        <circle class="iris-l" cx="47" cy="26.5" r="1.9" fill="#1a1a2a"/>
+        <circle cx="47.5" cy="25.5" r="0.7" fill="#fff"/>
+      </g>
+      <!-- 右眼 -->
+      <g class="eye-r">
+        <circle cx="58" cy="25" r="4.3" fill="#fff" stroke="#1a1a2a" stroke-width="1"/>
+        <circle class="iris-r" cx="59" cy="25.5" r="1.9" fill="#1a1a2a"/>
+        <circle cx="59.5" cy="24.5" r="0.7" fill="#fff"/>
+      </g>
+      <!-- 嘴（鼻端下方微笑弧 · .mouth 用于 talking 张开）-->
+      <path class="mouth" d="M 62 43 Q 68 50 74 44"
+        fill="none" stroke="#7A2D48" stroke-width="1.6" stroke-linecap="round"/>
+      <!-- 腮红 -->
+      <ellipse class="peppa-blush" cx="38" cy="40" rx="4" ry="2.2" fill="#F27094" opacity="0.55"/>
+      <!-- 连衣裙（红色梯形）-->
+      <path d="M 34 53 L 66 53 L 78 84 L 22 84 Z"
+        fill="url(#peppaDressGrad)" stroke="#8A1818" stroke-width="1.8" stroke-linejoin="round"/>
+      <!-- 裙摆波浪底边 -->
+      <path d="M 22 84 Q 28 81 34 84 T 46 84 T 58 84 T 70 84 T 78 84"
+        fill="none" stroke="#8A1818" stroke-width="1.2"/>
+      <!-- 左手（粉色圆球）-->
+      <circle class="hand-l" cx="26" cy="66" r="4.8"
+        fill="#FFB9D2" stroke="#B35779" stroke-width="1.6"/>
+      <!-- 右手 -->
+      <circle class="hand-r" cx="74" cy="66" r="4.8"
+        fill="#FFB9D2" stroke="#B35779" stroke-width="1.6"/>
+      <!-- 左腿 + 黑鞋 -->
+      <rect x="37" y="84" width="5.5" height="8" fill="#FFB9D2" stroke="#B35779" stroke-width="1.2"/>
+      <ellipse cx="39.8" cy="94" rx="5" ry="2.4" fill="#1a1a2a"/>
+      <!-- 右腿 + 黑鞋 -->
+      <rect x="57.5" y="84" width="5.5" height="8" fill="#FFB9D2" stroke="#B35779" stroke-width="1.2"/>
+      <ellipse cx="60.2" cy="94" rx="5" ry="2.4" fill="#1a1a2a"/>
+    </svg>

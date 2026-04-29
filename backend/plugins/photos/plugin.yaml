@@ -1,0 +1,28 @@
+# Photos plugin
+#
+# 消费由 photo-pipeline（每日 cron）从 Immich 提取并汇总的每日照片日记。
+# 日记位于 {owner}/Pipeline/AI_Photo_Digest/daily_photo/{date}.md；
+# triage 通过 gate/ingest hook 感知新照片日记，并决定是否需要关注。
+
+id: photos
+name: 每日照片日记
+category: photos
+description: 每日照片日记新产出时触发 triage 决策，读取照片摘要与人物/地点信息
+
+# ── Phase-3c-5 registry migration (2026-04-28) ────────────────────────────
+# 参照 wechat/health/ecommerce/intel/diary pilot 模式迁移。
+# 见 docs/components/plugin-system.md Phase 3c
+
+provides:
+  card_sources: [photos-pipeline]
+  data_paths:
+    today_photo: "{owner}/Pipeline/AI_Photo_Digest/daily_photo/{date}.md"
+
+triage_hooks:
+  on_gate:
+    script: scripts/triage-gate.sh
+    timeout_sec: 5
+  on_ingest:
+    script: scripts/triage-ingest.sh
+    timeout_sec: 15
+# ─────────────────────────────────────────────────────────────────────────
