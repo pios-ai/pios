@@ -1,0 +1,74 @@
+<svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- 身体（椭圆 · 上移使身顶 y=54 与头底 y=57 有 3 单位重叠） -->
+      <ellipse class="body-shape" cx="50" cy="72" rx="22" ry="18"
+        fill="#00A0E9" stroke="#006CAC" stroke-width="2"/>
+      <!-- 白肚兜（圆，占身体下部） -->
+      <circle class="pocket" cx="50" cy="77" r="11"
+        fill="#ffffff" stroke="#006CAC" stroke-width="1.3"/>
+      <!-- 肚兜口袋弧线 -->
+      <path class="pocket-mouth" d="M 41 75 A 9 9 0 0 0 59 75"
+        fill="none" stroke="#006CAC" stroke-width="1.2"/>
+      <!-- 处理光点（processing 时在肚兜口袋中心闪烁） -->
+      <circle class="spark" cx="50" cy="77" r="1.4" fill="#FFE659"/>
+      <!-- 左脚 -->
+      <ellipse class="foot-l" cx="42" cy="93" rx="7" ry="2.5"
+        fill="#ffffff" stroke="#006CAC" stroke-width="1.2"/>
+      <!-- 右脚 -->
+      <ellipse class="foot-r" cx="58" cy="93" rx="7" ry="2.5"
+        fill="#ffffff" stroke="#006CAC" stroke-width="1.2"/>
+      <!-- 头（蓝圆 · 头底 y=57 与身顶 y=54 重叠 3 单位，消除断层） -->
+      <circle class="head-body" cx="50" cy="32" r="25"
+        fill="#00A0E9" stroke="#006CAC" stroke-width="2"/>
+      <!-- 红色颈带（跨越头身重叠区） -->
+      <rect class="collar" x="28" y="54" width="44" height="4"
+        fill="#E53030"/>
+      <!-- 黄色铃铛（紧贴颈带下方，挂在身体顶部） -->
+      <g class="bell">
+        <circle cx="50" cy="60" r="3.5"
+          fill="#F0D020" stroke="#8A6E10" stroke-width="0.9"/>
+        <line x1="50" y1="58" x2="50" y2="63"
+          stroke="#8A6E10" stroke-width="0.8"/>
+        <circle cx="50" cy="61.5" r="0.8" fill="#8A6E10"/>
+      </g>
+      <!-- 白脸（椭圆，填满头下半，留出蓝头上部） -->
+      <ellipse class="face" cx="50" cy="40" rx="18" ry="12"
+        fill="#ffffff" stroke="#006CAC" stroke-width="0.7"/>
+      <!-- 左眼（两眼内缘相切，经典 Doraemon） -->
+      <g class="eye-l">
+        <ellipse cx="46" cy="30" rx="4" ry="5.5" fill="#ffffff" stroke="#1a1a2a" stroke-width="0.8"/>
+        <circle class="iris-l" cx="47" cy="31" r="1.6" fill="#1a1a2a"/>
+        <circle cx="47.5" cy="30" r="0.5" fill="#ffffff"/>
+      </g>
+      <!-- 右眼 -->
+      <g class="eye-r">
+        <ellipse cx="54" cy="30" rx="4" ry="5.5" fill="#ffffff" stroke="#1a1a2a" stroke-width="0.8"/>
+        <circle class="iris-r" cx="53" cy="31" r="1.6" fill="#1a1a2a"/>
+        <circle cx="53.5" cy="30" r="0.5" fill="#ffffff"/>
+      </g>
+      <!-- 鼻（红圆） -->
+      <circle class="nose" cx="50" cy="38" r="2"
+        fill="#E53030" stroke="#1a1a2a" stroke-width="0.5"/>
+      <!-- 鼻→嘴竖线 -->
+      <line class="nose-line" x1="50" y1="40" x2="50" y2="46"
+        stroke="#1a1a2a" stroke-width="0.9"/>
+      <!-- 嘴（微笑弧） -->
+      <path class="mouth" d="M 43 46 Q 50 51 57 46" fill="none"
+        stroke="#1a1a2a" stroke-width="1.3" stroke-linecap="round"/>
+      <!-- 胡须 · 左 3 -->
+      <line class="whisker" x1="32" y1="37" x2="43" y2="38" stroke="#1a1a2a" stroke-width="0.8" stroke-linecap="round"/>
+      <line class="whisker" x1="31" y1="40" x2="43" y2="40" stroke="#1a1a2a" stroke-width="0.8" stroke-linecap="round"/>
+      <line class="whisker" x1="32" y1="43" x2="43" y2="42" stroke="#1a1a2a" stroke-width="0.8" stroke-linecap="round"/>
+      <!-- 胡须 · 右 3 -->
+      <line class="whisker" x1="57" y1="38" x2="68" y2="37" stroke="#1a1a2a" stroke-width="0.8" stroke-linecap="round"/>
+      <line class="whisker" x1="57" y1="40" x2="69" y2="40" stroke="#1a1a2a" stroke-width="0.8" stroke-linecap="round"/>
+      <line class="whisker" x1="57" y1="42" x2="68" y2="43" stroke="#1a1a2a" stroke-width="0.8" stroke-linecap="round"/>
+      <!-- 左手 -->
+      <circle class="hand-l" cx="22" cy="68" r="5.5"
+        fill="#ffffff" stroke="#006CAC" stroke-width="1.4"/>
+      <!-- 右手 -->
+      <circle class="hand-r" cx="78" cy="68" r="5.5"
+        fill="#ffffff" stroke="#006CAC" stroke-width="1.4"/>
+      <!-- 冷汗（alert 时在右太阳穴滴） -->
+      <ellipse class="sweat" cx="70" cy="14" rx="1.6" ry="2.4"
+        fill="#5EB8EC" stroke="#2A7FB8" stroke-width="0.5"/>
+    </svg>
