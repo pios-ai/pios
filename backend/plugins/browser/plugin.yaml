@@ -1,0 +1,30 @@
+# Browser plugin
+#
+# Surfaces PiBrowser session metadata changes to core triage through the
+# plugin registry. PiBrowser itself stays owned by the Electron app; this
+# plugin only provides a deterministic gate/ingest interface.
+
+id: browser
+name: PiBrowser 会话
+category: browser
+description: PiBrowser sessions.json 更新时触发 triage，提供会话数量和最新活动摘要
+platform: macos
+
+# ── Phase-3c-7 registry migration (2026-04-29) ───────────────────────────
+# 参照 wechat/health/ecommerce/intel/diary/photos/content 模式迁移。
+# 见 docs/components/plugin-system.md Phase 3c
+
+provides:
+  card_sources: [browser-session, pibrowser-session]
+  data_paths:
+    sessions_json: "{home}/Library/Application Support/PiOS/sessions.json"
+    session_messages_dir: "{home}/Library/Application Support/PiOS/session-messages/"
+
+triage_hooks:
+  on_gate:
+    script: scripts/triage-gate.sh
+    timeout_sec: 5
+  on_ingest:
+    script: scripts/triage-ingest.sh
+    timeout_sec: 10
+# ─────────────────────────────────────────────────────────────────────────

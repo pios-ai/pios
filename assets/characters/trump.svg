@@ -1,0 +1,49 @@
+<svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- 蓝西装身 -->
+      <path class="body-shape" d="M 22 50 Q 22 44 28 42 L 38 40 Q 50 42 62 40 L 72 42 Q 78 44 78 50 L 78 94 Q 50 96 22 94 Z"
+        fill="#1A3556" stroke="#0A1A30" stroke-width="1.5"/>
+      <!-- 白衬衫三角 -->
+      <polygon points="44,42 50,58 56,42" fill="#F8F8F8" stroke="#0A1A30" stroke-width="0.6"/>
+      <!-- 红领带 -->
+      <path class="tie" d="M 47 42 L 53 42 L 54 58 L 52 82 L 48 82 L 46 58 Z"
+        fill="#D42E2E" stroke="#8A1A1A" stroke-width="0.5"/>
+      <!-- 头（橙色皮肤圆） -->
+      <circle class="head" cx="50" cy="26" r="17" fill="#F4B08A" stroke="#B8784E" stroke-width="1.2"/>
+      <!-- 颈（连接头和身，单薄一条） -->
+      <rect x="45" y="40" width="10" height="4" fill="#F4B08A" stroke="#B8784E" stroke-width="0.6"/>
+      <!-- 招牌 comb-over 金发：从右往左梳 -->
+      <path class="hair" d="M 34 21 Q 30 8 40 6 Q 50 3 60 6 Q 69 9 68 22 L 62 19 Q 55 17 50 20 Q 44 18 38 21 Z"
+        fill="#E8C460" stroke="#8A6E20" stroke-width="0.8"/>
+      <!-- 梳发线条（comb-over 层次感） -->
+      <path d="M 38 15 Q 48 12 62 14" fill="none" stroke="#B8922A" stroke-width="0.4"/>
+      <path d="M 36 19 Q 48 17 64 18" fill="none" stroke="#B8922A" stroke-width="0.4"/>
+      <!-- 眉毛（抬起偏斜） -->
+      <path d="M 39 22 Q 43 20.5 47 22" fill="none" stroke="#8A6E20" stroke-width="1" stroke-linecap="round"/>
+      <path d="M 53 22 Q 57 20.5 61 22" fill="none" stroke="#8A6E20" stroke-width="1" stroke-linecap="round"/>
+      <!-- 眼 -->
+      <g class="eye-l">
+        <ellipse cx="43" cy="26" rx="2.5" ry="2" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="0.6"/>
+        <circle class="iris-l" cx="43" cy="26" r="1.3" fill="#2A5A8A"/>
+      </g>
+      <g class="eye-r">
+        <ellipse cx="57" cy="26" rx="2.5" ry="2" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="0.6"/>
+        <circle class="iris-r" cx="57" cy="26" r="1.3" fill="#2A5A8A"/>
+      </g>
+      <!-- 鼻 -->
+      <path d="M 49 28 Q 50 33 51 28" fill="none" stroke="#B8784E" stroke-width="0.8" stroke-linecap="round"/>
+      <!-- 嘴（噘嘴标志性小椭圆） -->
+      <ellipse class="mouth" cx="50" cy="37" rx="3" ry="1.2" fill="#C85858" stroke="#6A2020" stroke-width="0.6"/>
+      <!-- MAGA 金胸针作 bell -->
+      <g class="bell">
+        <circle cx="30" cy="52" r="3" fill="#F0D020" stroke="#8A6E10" stroke-width="0.6"/>
+        <circle cx="30" cy="52" r="1.4" fill="#D42E2E"/>
+      </g>
+      <!-- 左手 -->
+      <circle class="hand-l" cx="20" cy="64" r="5" fill="#F4B08A" stroke="#B8784E" stroke-width="1.2"/>
+      <!-- 右手 -->
+      <circle class="hand-r" cx="80" cy="64" r="5" fill="#F4B08A" stroke="#B8784E" stroke-width="1.2"/>
+      <!-- spark（头顶思考 processing） -->
+      <circle class="spark" cx="50" cy="6" r="1.6" fill="#FFE659"/>
+      <!-- sweat -->
+      <ellipse class="sweat" cx="70" cy="14" rx="1.6" ry="2.4" fill="#5EB8EC" stroke="#2A7FB8" stroke-width="0.5"/>
+    </svg>
