@@ -1,0 +1,43 @@
+# Voice Engine plugin (qwen-voice)
+#
+# PiOS NPC 语音（克隆音色 TTS + 本地 ASR）依赖独立服务 qwen-voice。
+# 这个服务跑在 localhost:7860，不在 PiOS 仓库代码里——它是几个开源 MLX
+# 项目（mlx-audio / mlx-whisper / mlx-lm）的组合，需要本机 ~6 GB 空间装。
+#
+# Lite build 不带 voice，启动后 NPC 气泡只显示文字不发声。
+# 装这个 plugin 后点"激活"，AI 会带用户在自己机器上把 qwen-voice 装起来。
+# 完整文档：docs/setup-qwen-voice.md
+
+id: voice
+name: NPC 语音引擎
+category: capability
+description: 启用 NPC 克隆音色（小豆温柔 / 派大星 / 多啦A梦 等）+ 本地语音识别。需要 Apple Silicon Mac + 6GB 磁盘。
+
+# 激活：开 PiBrowser 新会话让 Pi 引导用户在本地装 qwen-voice
+activation:
+  prompt: prompts/activate.md
+  runtimes:
+    - claude-cli
+    - codex-cli
+  allowed_tools: 'Read,Write,Edit,Bash,Glob,Grep'
+  # 成功标志：venv 创建 + entrypoint 写好就算装好。早期手工装 qwen-voice 的用户没跑过
+  # AI 引导流程，{pios_home}/voice/activated.json 永远不存在；但 venv + app.py 都在 = 装好了。
+  # 真要走 AI 引导验证完整性的话，prompts/activate.md 末尾仍会写 activated.json（无害的 audit 标记）。
+  success_marker:
+    - '{home}/qwen-voice/bin/python3.12'
+    - '{home}/qwen-voice/app.py'
+
+# voice 没有 cron task——它是 capability 不是 pipeline；激活后 PiOS 主进程
+# 在下次启动时自动检测 ~/qwen-voice/bin/python 并 spawn app.py daemon
+tasks: {}
+
+# 系统前置（activate.md 里 AI 会逐条检查）
+requirements:
+  - label: Apple Silicon Mac (arm64)
+    check: '[ "$(uname -m)" = "arm64" ]'
+  - label: Homebrew Python 3.12 已装
+    check: test -x /opt/homebrew/opt/python@3.12/bin/python3.12
+  - label: 磁盘剩余 ≥ 6GB
+    check: '[ $(df -g $HOME | tail -1 | awk ''{print $4}'') -ge 6 ]'
+  - label: 至少 16GB 内存（推理峰值，建议）
+    check: '[ $(sysctl -n hw.memsize) -ge 17179869184 ]'

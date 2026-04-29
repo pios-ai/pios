@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PiBrowser</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Tab 栏（最顶部，Chrome 风格） -->
+  <div id="tab-bar" style="display: none;">
+    <div id="tab-list"></div>
+    <button id="new-tab-btn" title="新标签页 (Cmd+T)">+</button>
+  </div>
+
+  <!-- 地址栏 -->
+  <div id="topbar">
+    <div id="nav-buttons">
+      <button id="btn-go-back" class="nav-btn nav-arrow" title="后退 (Cmd+[)" disabled>&lsaquo;</button>
+      <button id="btn-go-forward" class="nav-btn nav-arrow" title="前进 (Cmd+])" disabled>&rsaquo;</button>
+      <button id="btn-reload" class="nav-btn" title="刷新 (Cmd+R)">&#x21bb;</button>
+    </div>
+    <div id="address-bar">
+      <button id="btn-pin" class="nav-btn" title="置顶当前页" style="display:none;">&#x1F4CC;</button>
+      <div id="url-bar-wrapper">
+        <input id="url-input" type="text" placeholder="输入网址或搜索..." />
+        <div id="loading-bar"></div>
+      </div>
+      <button id="btn-bookmark" class="nav-btn" title="添加书签 (Cmd+D)">&#x2606;</button>
+    </div>
+    <button id="btn-panel" class="nav-btn topbar-icon-btn" title="书签/历史/下载">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <button id="btn-ask-pi" class="ask-pi-btn" title="询问 Pi (Cmd+Shift+.)">询问 Pi</button>
+    <button id="incognito-toggle" style="display:none;"></button>
+    <button id="privacy-site-toggle" style="display:none;"></button>
+    <button id="btn-back-to-browser" style="display:none;"></button>
+    <span id="status-engine" style="display:none;"></span>
+    <button id="btn-pios-home" style="display:none;"></button>
+    <button id="btn-session-sidebar" style="display:none;"></button>
+    <div id="topbar-title" style="display:none;">Pi</div>
+  </div>
+
+  <!-- 左侧会话列表（Atlas 风格） -->
+  <div id="session-sidebar">
+    <div id="session-sidebar-header">
+      <span class="session-logo">✦</span>
+      <span style="flex:1;"></span>
+      <button id="session-sidebar-close" class="session-header-btn" title="关闭">✕</button>
+    </div>
+    <div id="session-search-bar">
+      <input id="session-search" type="text" placeholder="🔍 搜索聊天..." />
+    </div>
+    <div id="session-list-wrapper">
+      <button id="new-session-btn" class="session-new-chat-btn">✏ 新聊天</button>
+      <div id="session-list"></div>
+    </div>
+    <div id="session-archive-area">
+      <div style="display:flex;align-items:center;">
+        <button id="session-archive-btn" class="session-archive-toggle" style="flex:1;">📦 归档</button>
+        <button id="session-archive-clear" class="session-archive-toggle" style="display:none;color:#f66;width:auto;">清空</button>
+      </div>
+      <div id="session-archive-list" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- 页面内搜索栏 -->
+  <div id="find-bar" style="display: none;">
+    <input id="find-input" type="text" placeholder="在页面中查找..." />
+    <button id="find-close">✕</button>
+  </div>
+
+  <!-- 聊天模式：全屏 -->
+  <div id="chat-fullscreen" class="active">
+    <div id="welcome-hero">
+      <h1 class="welcome-title">What can I help with?</h1>
+    </div>
+    <div id="chat-header-bar" style="display:none;">
+      <div id="chat-session-indicator"></div>
+      <div class="header-controls">
+        <button id="header-engine-btn" class="header-pill" data-eng="claude">Pi Claude ▾</button>
+        <div id="header-engine-popup" class="engine-popup" style="display:none;">
+          <div class="engine-opt active" data-eng="auto">Auto <span class="eng-desc">自动选择</span></div>
+          <div class="engine-opt" data-eng="gpt">GPT <span class="eng-desc">搜索与对话</span></div>
+          <div class="engine-opt" data-eng="claude">Claude <span class="eng-desc">代码与执行</span></div>
+          <div class="engine-opt" data-eng="codex">Codex <span class="eng-desc">代码引擎</span></div>
+        </div>
+        <button id="header-model-btn" class="header-pill model-pill" data-model="sonnet">Sonnet ▾</button>
+        <div id="header-model-popup" class="engine-popup" style="display:none;"></div>
+        <button id="header-perm-btn" class="header-pill perm-pill" data-level="full">Full</button>
+        <div id="token-usage-display" class="header-pill token-pill" style="display:none;" title="Token 用量">
+          <svg class="token-ring" viewBox="0 0 24 24" width="16" height="16">
+            <circle class="ring-bg" cx="12" cy="12" r="9"></circle>
+            <circle id="token-usage-ring" class="ring-fill" cx="12" cy="12" r="9"></circle>
+          </svg>
+          <span id="token-usage-text">0k</span>
+        </div>
+      </div>
+    </div>
+    <div id="chat-messages"></div>
+    <!-- 终端面板：显示 Claude Code 执行过程 -->
+    <div id="terminal-panel" style="display:none;">
+      <div id="terminal-header">
+        <span>执行过程</span>
+        <div>
+          <button id="claude-stop" title="停止执行" style="display:none; color:#ff8c42; margin-right:8px;">⏹ 停止</button>
+          <button id="terminal-clear" title="清空">✕</button>
+        </div>
+      </div>
+      <div id="terminal-output"></div>
+    </div>
+    <div id="chat-input-area">
+      <div id="terminal-context-banner" style="display:none;">
+        <span>终端上下文已带入</span>
+        <button id="clear-context">✕</button>
+      </div>
+      <div id="screenshot-preview" style="display:none;">
+        <img id="screenshot-preview-img" />
+        <button id="screenshot-preview-close" title="移除截图">✕</button>
+      </div>
+      <div id="chat-attachments" style="display:none;"></div>
+      <div id="chat-input-row">
+        <!-- 引擎选择和权限开关已移到顶部 header-bar -->
+        <div id="chat-engine-wrap" style="display:none;position:relative;">
+          <button id="chat-engine-btn" class="engine-pill-btn">Pi <span id="chat-engine-label">Auto</span> <span class="dropdown-arrow">▾</span></button>
+          <div id="chat-engine-popup" class="engine-popup" style="display:none;">
+            <div class="engine-opt active" data-eng="auto">Auto <span class="eng-desc">自动选择</span></div>
+            <div class="engine-opt" data-eng="gpt">GPT <span class="eng-desc">搜索与对话</span></div>
+            <div class="engine-opt" data-eng="claude">Claude <span class="eng-desc">代码与执行</span></div>
+            <div class="engine-opt" data-eng="codex">Codex <span class="eng-desc">代码引擎</span></div>
+          </div>
+        </div>
+        <button id="chat-perm-btn" style="display:none;"></button>
+        <button id="chat-plus-btn" class="sidebar-plus-btn" title="更多操作">+</button>
+        <div id="chat-plus-menu" style="display:none;">
+          <div class="plus-item" data-action="attach">📎 添加附件</div>
+          <div class="plus-item" data-action="screenshot">📷 截取屏幕</div>
+          <div class="plus-item" data-action="agent">🤖 代理模式</div>
+          <div class="plus-separator"></div>
+          <div class="plus-item" data-action="tts">🔊 语音回复 <span id="chat-tts-status">✓</span></div>
+          <div class="plus-item" data-action="clean">🔒 匿名对话 <span id="chat-clean-status"></span></div>
+          <div class="plus-separator"></div>
+          <div class="plus-item plus-danger" data-action="clear-history">🗑 清空聊天记录</div>
+        </div>
+        <textarea id="chat-input" placeholder="有问题，尽管问" rows="1"></textarea>
+        <button id="mic-btn" class="mic-btn chat-mic-send" title="按住说话">🎤</button>
+        <button id="chat-stop-btn" class="chat-stop-btn" style="display:none;" title="停止">⏹</button>
+      </div>
+      <div id="voice-status" style="display:none;"></div>
+      <!-- Hidden: JS compatibility -->
+      <button id="send-btn" style="display:none;"></button>
+      <button id="screenshot-btn" style="display:none;"></button>
+      <input type="checkbox" id="tts-enabled" checked style="display:none;">
+      <div id="engine-dropdown" style="display:none;">
+        <button id="engine-dropdown-btn" style="display:none;"></button>
+        <div id="engine-dropdown-menu" style="display:none;"></div>
+      </div>
+      <button id="theme-toggle-btn" style="display:none;"></button>
+      <button id="export-chat-btn" style="display:none;"></button>
+      <button id="clear-chat-btn" style="display:none;"></button>
+    </div>
+  </div>
+
+  <!-- 浏览器模式：右侧栏 -->
+  <div id="sidebar" style="display: none;">
+    <div id="sidebar-drag" title="拖拽调整宽度"></div>
+    <div id="sidebar-header">
+      <button id="sidebar-menu-btn" class="sidebar-icon-btn" title="更多">⋯</button>
+      <div id="sidebar-menu-dropdown" style="display:none;">
+        <div class="menu-item" data-action="sessions">☰ 对话列表</div>
+        <div class="menu-item" data-action="expand">⤢ 展开全屏</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" data-action="incognito">👁 隐身模式</div>
+        <div class="menu-item" data-action="privacy">🔓 站点可见性</div>
+        <div class="menu-item" data-action="summarize">📋 总结页面</div>
+        <div class="menu-item" data-action="translate">🌐 翻译页面</div>
+      </div>
+      <div id="sidebar-engine-wrap" style="position:relative;flex:1;">
+        <button id="sidebar-engine-btn" class="engine-pill-btn">Pi <span id="sidebar-engine-label">Auto</span> <span class="dropdown-arrow">▾</span></button>
+        <div id="sidebar-engine-popup" class="engine-popup" style="display:none;">
+          <div class="engine-opt active" data-eng="auto">Auto <span class="eng-desc">自动选择</span></div>
+          <div class="engine-opt" data-eng="gpt">GPT <span class="eng-desc">搜索与对话</span></div>
+          <div class="engine-opt" data-eng="claude">Claude <span class="eng-desc">代码与执行</span></div>
+          <div class="engine-opt" data-eng="codex">Codex <span class="eng-desc">代码引擎</span></div>
+        </div>
+      </div>
+      <button id="sidebar-new-chat" class="sidebar-icon-btn" title="新对话">+</button>
+      <button id="sidebar-toggle" class="sidebar-icon-btn" title="关闭">✕</button>
+      <!-- Hidden: JS references -->
+      <button id="sidebar-sessions-btn" style="display:none;"></button>
+      <button id="btn-expand-chat" style="display:none;"></button>
+    </div>
+    <!-- 快捷操作（右键菜单触发，不再占空间） -->
+    <div id="quick-actions" style="display:none;">
+      <button class="quick-btn" data-action="summarize" title="总结页面">📋 总结</button>
+      <button class="quick-btn" data-action="translate" title="翻译页面">🌐 翻译</button>
+      <button class="quick-btn" data-action="card" title="从页面创建卡片">📝 建卡</button>
+      <button class="quick-btn" data-action="extract" title="提取关键信息">🔍 提取</button>
+    </div>
+    <!-- Sidebar 内的 Claude 执行面板 -->
+    <div id="sidebar-terminal" style="display:none;">
+      <div id="sidebar-terminal-header">
+        <span>执行过程</span>
+        <button id="sidebar-claude-stop" title="停止" style="display:none; color:#ff8c42;">⏹</button>
+      </div>
+      <div id="sidebar-terminal-output"></div>
+    </div>
+    <div id="sidebar-header-bar" style="display:none;">
+      <div id="sidebar-session-indicator"></div>
+      <div class="header-controls">
+        <button id="sidebar-header-engine-btn" class="header-pill" data-eng="claude">Pi Claude ▾</button>
+        <button id="sidebar-header-model-btn" class="header-pill model-pill" data-model="sonnet">Sonnet ▾</button>
+        <div id="sidebar-header-model-popup" class="engine-popup" style="display:none;"></div>
+        <button id="sidebar-header-perm-btn" class="header-pill perm-pill" data-level="full">Full</button>
+        <div id="sidebar-token-usage-display" class="header-pill token-pill" style="display:none;" title="Token 用量">
+          <svg class="token-ring" viewBox="0 0 24 24" width="16" height="16">
+            <circle class="ring-bg" cx="12" cy="12" r="9"></circle>
+            <circle id="sidebar-token-usage-ring" class="ring-fill" cx="12" cy="12" r="9"></circle>
+          </svg>
+          <span id="sidebar-token-usage-text">0k</span>
+        </div>
+      </div>
+    </div>
+    <div id="sidebar-messages-slot"></div><!-- chatMessages 会被移到这里 -->
+    <div id="sidebar-input-area">
+      <!-- 页面注入 pill（Atlas 风格，会随模式切换移入 chat-input-area） -->
+      <div id="page-context-bar" style="display:none;">
+        <img id="page-context-favicon" style="display:none;">
+        <span id="page-context-title"></span>
+        <span id="privacy-lock" style="display:none;" title="此站点已设为私密 — AI 不可见">🔒</span>
+        <button id="page-context-close" title="取消注入">×</button>
+        <div id="page-context-card">
+          <img id="page-context-card-favicon" style="display:none;">
+          <div id="page-context-card-text">
+            <div id="page-context-card-title"></div>
+            <div id="page-context-card-domain"></div>
+          </div>
+        </div>
+      </div>
+      <div id="sidebar-attachments" style="display:none;"></div>
+      <div id="sidebar-input-row">
+        <button id="sidebar-plus-btn" class="sidebar-plus-btn" title="更多操作">+</button>
+        <div id="sidebar-plus-menu" style="display:none;">
+          <div class="plus-item" data-action="attach">📎 添加附件</div>
+          <div class="plus-item" data-action="screenshot">📷 截取屏幕</div>
+          <div class="plus-item" data-action="agent">🤖 代理模式</div>
+          <div class="plus-separator"></div>
+          <div class="plus-item" data-action="tts">🔊 语音回复 <span id="sidebar-tts-status">✓</span></div>
+          <div class="plus-item" data-action="clean">🔒 匿名对话 <span id="sidebar-clean-status"></span></div>
+          <div class="plus-separator"></div>
+          <div class="plus-item plus-danger" data-action="clear-history">🗑 清空聊天记录</div>
+        </div>
+        <textarea id="sidebar-input" placeholder="有问题，尽管问" rows="1"></textarea>
+        <button id="sidebar-mic" class="mic-btn sidebar-mic-send" title="按住说话">🎤</button>
+        <button id="sidebar-stop-btn" style="display:none;" title="停止">⏹</button>
+      </div>
+      <!-- Hidden: JS compatibility -->
+      <button id="sidebar-screenshot" style="display:none;"></button>
+      <button id="sidebar-send" style="display:none;"></button>
+      <input type="checkbox" id="sidebar-tts" checked style="display:none;">
+      <div id="sidebar-engine-toggle" style="display:none;"></div>
+      <div id="sidebar-engine-dropdown" style="display:none;">
+        <button id="sidebar-engine-btn" style="display:none;"></button>
+        <div id="sidebar-engine-menu" style="display:none;"></div>
+      </div>
+    </div>
+    <div id="sidebar-voice-status" style="display:none;"></div>
+  </div>
+
+  <!-- sidebar-expand 已废弃，由 btn-ask-pi 替代 -->
+  <div id="sidebar-expand" style="display:none;"></div>
+
+  <!-- 面板（书签/历史/下载）-->
+  <div id="panel-overlay" style="display:none;">
+    <div id="panel">
+      <div id="panel-header">
+        <div id="panel-tabs">
+          <button class="panel-tab active" data-tab="bookmarks">书签</button>
+          <button class="panel-tab" data-tab="history">历史</button>
+          <button class="panel-tab" data-tab="downloads">下载</button>
+          <button class="panel-tab" data-tab="privacy">隐私</button>
+          <button class="panel-tab" data-tab="pios">PiOS</button>
+        </div>
+        <button id="panel-close">✕</button>
+      </div>
+      <div id="panel-content">
+        <div id="panel-bookmarks" class="panel-section active">
+          <div id="bookmarks-list"></div>
+          <div id="panel-empty-bookmarks" class="panel-empty">还没有书签，按 Cmd+D 或点 ☆ 添加</div>
+        </div>
+        <div id="panel-history" class="panel-section">
+          <div id="history-list"></div>
+          <div id="panel-empty-history" class="panel-empty">还没有浏览历史</div>
+          <button id="history-clear-btn" class="panel-action-btn" style="display:none;">清空历史</button>
+        </div>
+        <div id="panel-downloads" class="panel-section">
+          <div id="downloads-list"></div>
+          <div id="panel-empty-downloads" class="panel-empty">还没有下载记录</div>
+        </div>
+        <div id="panel-privacy" class="panel-section">
+          <div id="privacy-incognito-row" class="privacy-setting-row">
+            <label><input type="checkbox" id="panel-incognito-toggle"> 隐身模式（所有站点 AI 不可见）</label>
+          </div>
+          <div id="privacy-add-row" class="privacy-setting-row">
+            <input id="privacy-add-input" type="text" placeholder="添加域名（如 bank.com）" />
+            <button id="privacy-add-btn">添加</button>
+          </div>
+          <div id="privacy-domain-list"></div>
+          <div id="panel-empty-privacy" class="panel-empty">还没有设置 AI 不可见的站点</div>
+        </div>
+        <div id="panel-pios" class="panel-section">
+          <div id="pios-stats"></div>
+          <div class="pios-subtabs">
+            <button class="pios-subtab active" data-view="decisions">Review</button>
+            <button class="pios-subtab" data-view="agents">Agents</button>
+            <button class="pios-subtab" data-view="projects">Projects</button>
+            <button class="pios-subtab" data-view="plugins">Plugins</button>
+            <button class="pios-subtab" data-view="runtimes">Runtimes</button>
+          </div>
+          <div id="pios-view-decisions" class="pios-view active"></div>
+          <div id="pios-view-agents" class="pios-view"></div>
+          <div id="pios-view-projects" class="pios-view"></div>
+          <div id="pios-view-plugins" class="pios-view"></div>
+          <div id="pios-view-runtimes" class="pios-view"></div>
+          <div id="panel-empty-pios" class="panel-empty">PiOS Engine not available</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PiOS 光球孵化仪式（v0.1 文字+系统语音；hatching-onboarding 卡） -->
+  <div id="hatching-stage" hidden>
+    <button id="hatching-voice-toggle" class="hatching-voice-toggle" title="孵化期间用 macOS 系统语音；qwen 语音要等环境装完后 NPC 对话才有" aria-pressed="false">
+      <span class="hatching-voice-on" hidden>🔊 语音 ON（系统 say）</span>
+      <span class="hatching-voice-off">🔇 语音 OFF（孵化默认）</span>
+    </button>
+    <button id="hatching-skip" class="hatching-skip-btn" title="跳过仪式，走经典向导">跳过仪式 →</button>
+
+    <div class="hatching-panel" data-panel="orb">
+      <div class="hatching-orb" id="hatching-orb"></div>
+      <div class="hatching-hint">点击光球唤醒 Pi</div>
+    </div>
+
+    <div class="hatching-panel" data-panel="pick" hidden>
+      <h2 class="hatching-title">选一个陪伴你的 Pi</h2>
+      <div class="hatching-npc-grid" id="hatching-npc-grid"></div>
+      <div class="hatching-hint">点一个看 ta，再点别的换 ta；想好了点下面"就选你"</div>
+      <div class="hatching-pick-preview" id="hatching-pick-preview" hidden>
+        <img class="hatching-pick-preview-avatar" id="hatching-pick-preview-avatar" alt="" />
+        <div class="hatching-pick-preview-meta">
+          <div class="hatching-pick-preview-name" id="hatching-pick-preview-name"></div>
+          <div class="hatching-pick-preview-greet" id="hatching-pick-preview-greet"></div>
+        </div>
+        <button id="hatching-pick-confirm" class="hatching-pick-confirm">就选你 →</button>
+      </div>
+    </div>
+
+    <div class="hatching-panel" data-panel="hatch" hidden>
+      <div class="hatching-orb hatching-orb-shrink"></div>
+      <img class="hatching-npc-reveal" id="hatching-npc-reveal" alt="" />
+    </div>
+
+    <div class="hatching-panel" data-panel="chat" hidden>
+      <div class="hatching-chat">
+        <div class="hatching-chat-npc">
+          <img class="hatching-chat-avatar" id="hatching-chat-avatar" alt="" />
+          <div class="hatching-chat-name" id="hatching-chat-name"></div>
+        </div>
+        <div class="hatching-chat-stream" id="hatching-chat-stream"></div>
+        <div class="hatching-chat-input" id="hatching-chat-input-wrap" hidden>
+          <button id="hatching-chat-mic" class="hatching-mic-btn" title="语音输入">🎤</button>
+          <input type="text" id="hatching-chat-input" autocomplete="off" spellcheck="false" />
+          <button id="hatching-chat-send">↵</button>
+        </div>
+        <div class="hatching-mic-status" id="hatching-mic-status" hidden></div>
+        <div class="hatching-chat-chips" id="hatching-chat-chips" hidden></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PiOS Setup 向导 -->
+  <div id="pios-setup-overlay" style="display:none;">
+    <div id="pios-setup">
+      <div id="pios-setup-form">
+        <!-- Step 0: 环境检查（JS 填入 deps-list 内容；全 ✓ 前 Install 按钮 disabled） -->
+        <div id="pios-setup-deps" class="pios-setup-deps-box">
+          <div class="pios-setup-section-title">环境检查</div>
+          <div id="deps-list"></div>
+          <div id="deps-log" class="deps-log" style="display:none;"></div>
+          <div style="display:flex; gap:6px; margin-top:8px;">
+            <button id="deps-refresh" class="pios-setup-btn-secondary">重新检查</button>
+            <button id="deps-log-toggle" class="pios-setup-btn-secondary">展开日志</button>
+          </div>
+        </div>
+
+        <label class="pios-setup-label">
+          你叫什么？
+          <input id="setup-name" type="text" placeholder="e.g. owner" />
+        </label>
+        <label class="pios-setup-label">
+          Vault 存哪
+          <input id="setup-vault" type="text" />
+        </label>
+        <!-- AI Runtime / 插件均无选项：有啥用啥，全部默认装。WeChat 装完去 Plugins 里激活。 -->
+        <button id="setup-install" class="pios-setup-btn" disabled title="请先把环境检查全部打 ✓">Install PiOS</button>
+      </div>
+      <div id="pios-setup-done" style="display:none;">
+        <div class="pios-setup-done-icon">&#10003;</div>
+        <h3>PiOS is ready!</h3>
+        <p id="pios-setup-done-msg"></p>
+        <button id="setup-start" class="pios-setup-btn">Start Using PiOS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent Mode 面板 -->
+  <div id="agent-panel" style="display:none;">
+    <div id="agent-header">
+      <span id="agent-status-icon">🤖</span>
+      <span id="agent-status-text">Agent Mode</span>
+      <button id="agent-stop-btn" title="停止 Agent">⏹ 停止</button>
+    </div>
+    <div id="agent-plan"></div>
+    <div id="agent-log"></div>
+    <div id="agent-confirm-bar" style="display:none;">
+      <span id="agent-confirm-text"></span>
+      <button id="agent-confirm-yes" class="agent-confirm-btn confirm-yes">✓ 继续</button>
+      <button id="agent-confirm-no" class="agent-confirm-btn confirm-no">✕ 取消</button>
+    </div>
+  </div>
+
+  <!-- Command Palette (Cmd+K) -->
+  <div id="command-palette" style="display:none;">
+    <div id="cmd-palette-inner">
+      <input id="cmd-palette-input" type="text" placeholder="输入命令..." autocomplete="off" />
+      <div id="cmd-palette-results"></div>
+    </div>
+  </div>
+
+  <!-- Chat Search (Cmd+Shift+F) -->
+  <div id="chat-search-bar" style="display:none;">
+    <input id="chat-search-input" type="text" placeholder="搜索对话..." />
+    <span id="chat-search-count"></span>
+    <button id="chat-search-close">✕</button>
+  </div>
+
+  <!-- 下载通知 -->
+  <div id="download-toast" style="display:none;"></div>
+  <!-- Toast 通知 -->
+  <div id="toast-notify" style="display:none;"></div>
+
+  <!-- Context 详情弹窗（点 token 条展开 /context breakdown） -->
+  <div id="ctx-detail-overlay" style="display:none;">
+    <div id="ctx-detail-modal">
+      <div id="ctx-detail-header">
+        <span id="ctx-detail-title">Context Breakdown</span>
+        <button id="ctx-detail-close">✕</button>
+      </div>
+      <div id="ctx-detail-body">加载中…</div>
+    </div>
+  </div>
+
+  <script src="../node_modules/marked/marked.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

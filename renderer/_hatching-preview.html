@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Hatching Preview (standalone)</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { margin: 0; background: #111; color: #fff; font-family: -apple-system, sans-serif; }
+    #launch { position: fixed; bottom: 24px; left: 24px; padding: 10px 18px; border-radius: 10px;
+             background: #4a9eff; color: #fff; border: none; font-size: 14px; cursor: pointer; z-index: 100; }
+    #summary { position: fixed; bottom: 24px; right: 24px; background: rgba(0,0,0,0.75);
+               color: #fff; padding: 14px; border-radius: 8px; font-size: 13px; max-width: 320px;
+               white-space: pre-wrap; z-index: 100; display: none; }
+  </style>
+</head>
+<body>
+  <button id="launch">▶ 启动孵化仪式（preview）</button>
+  <pre id="summary"></pre>
+
+  <!-- 孵化仪式 markup 镜像（保持与 index.html 一致）-->
+  <div id="hatching-stage" hidden>
+    <button id="hatching-voice-toggle" class="hatching-voice-toggle" title="开关语音" aria-pressed="true">
+      <span class="hatching-voice-on">🔊 语音 ON</span>
+      <span class="hatching-voice-off" hidden>🔇 语音 OFF</span>
+    </button>
+    <button id="hatching-skip" class="hatching-skip-btn" title="跳过仪式">跳过仪式 →</button>
+
+    <div class="hatching-panel" data-panel="orb">
+      <div class="hatching-orb" id="hatching-orb"></div>
+      <div class="hatching-hint">点击光球唤醒 Pi</div>
+    </div>
+
+    <div class="hatching-panel" data-panel="pick" hidden>
+      <h2 class="hatching-title">选一个陪伴你的 Pi</h2>
+      <div class="hatching-npc-grid" id="hatching-npc-grid"></div>
+      <div class="hatching-hint">点一个选中 ta</div>
+    </div>
+
+    <div class="hatching-panel" data-panel="hatch" hidden>
+      <div class="hatching-orb hatching-orb-shrink"></div>
+      <img class="hatching-npc-reveal" id="hatching-npc-reveal" alt="" />
+    </div>
+
+    <div class="hatching-panel" data-panel="chat" hidden>
+      <div class="hatching-chat">
+        <div class="hatching-chat-npc">
+          <img class="hatching-chat-avatar" id="hatching-chat-avatar" alt="" />
+          <div class="hatching-chat-name" id="hatching-chat-name"></div>
+        </div>
+        <div class="hatching-chat-stream" id="hatching-chat-stream"></div>
+        <div class="hatching-chat-input" id="hatching-chat-input-wrap" hidden>
+          <button id="hatching-chat-mic" class="hatching-mic-btn" title="按住说话" type="button">🎤</button>
+          <input type="text" id="hatching-chat-input" autocomplete="off" spellcheck="false" />
+          <button id="hatching-chat-send">↵</button>
+        </div>
+        <div class="hatching-mic-status" id="hatching-mic-status" hidden></div>
+        <div class="hatching-chat-chips" id="hatching-chat-chips" hidden></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ===== 镜像 app.js 里的 runHatchingCeremony（保持一致；真入口在 app.js）=====
+const _HATCHING_NPC_META = {
+  doraemon: { zh: '多啦A梦',   greet: '你好，我是多啦A梦。我们一起开始吧！' },
+  patrick:  { zh: '派大星',     greet: '嗨嗨嗨！我是派大星！你叫啥名字呀？' },
+  starlet:  { zh: '星仔',       greet: '嗨，我是星仔。准备好了吗？' },
+  baymax:   { zh: '大白',       greet: '你好。我是大白，你的个人伴侣。' },
+  kirby:    { zh: '卡比',       greet: '哈！我是卡比！' },
+  totoro:   { zh: '龙猫',       greet: '嗷呜——（我是龙猫）' },
+  slime:    { zh: '史莱姆',     greet: '嗨，我是史莱姆，请多关照！' },
+  minion:   { zh: '小黄人',     greet: 'Banana! 我是小黄人！' },
+  peppa:    { zh: '小猪佩奇',   greet: '你好，我是佩奇，这是我的 PiOS。' },
+  shinchan: { zh: '蜡笔小新',   greet: '嘿嘿，我是小新。' },
+  nailong:  { zh: '奶龙',       greet: '嗨，我是奶龙！' },
+  trump:    { zh: 'Trump',      greet: "Hello, I'm Trump. Let's make your PiOS great." },
+};
+const _HATCHING_NPC_ORDER = ['doraemon','patrick','starlet','baymax','kirby','totoro','slime','minion','peppa','shinchan','nailong','trump'];
+
+async function runHatchingCeremony() {
+  const stage = document.getElementById('hatching-stage');
+  if (!stage) return null;
+  stage.hidden = false;
+  const panels = {};
+  stage.querySelectorAll('.hatching-panel').forEach(p => panels[p.dataset.panel] = p);
+  const show = (name) => Object.entries(panels).forEach(([k,el]) => { el.hidden = (k !== name); });
+
+  let voiceOn = true;
+  const voiceToggleBtn = document.getElementById('hatching-voice-toggle');
+  const voiceOnLabel  = voiceToggleBtn.querySelector('.hatching-voice-on');
+  const voiceOffLabel = voiceToggleBtn.querySelector('.hatching-voice-off');
+  const refreshVoiceToggle = () => {
+    voiceToggleBtn.setAttribute('aria-pressed', String(voiceOn));
+    voiceOnLabel.hidden = !voiceOn;
+    voiceOffLabel.hidden = voiceOn;
+  };
+  voiceToggleBtn.onclick = () => { voiceOn = !voiceOn; refreshVoiceToggle(); if (!voiceOn && window.speechSynthesis) window.speechSynthesis.cancel(); };
+  refreshVoiceToggle();
+
+  const pickVoice = () => {
+    if (!window.speechSynthesis) return null;
+    const voices = window.speechSynthesis.getVoices() || [];
+    return voices.find(v => /zh-CN|zh_CN|cmn-Hans|Ting-Ting|Mei-Jia|美嘉|婷婷/i.test(v.lang + ' ' + v.name))
+        || voices.find(v => /^zh/i.test(v.lang))
+        || voices[0] || null;
+  };
+  if (window.speechSynthesis) { try { window.speechSynthesis.getVoices(); } catch(_) {} window.speechSynthesis.onvoiceschanged = () => {}; }
+  const speakTts = (text) => new Promise(res => {
+    if (!voiceOn || !window.speechSynthesis || !text) return res();
+    try {
+      const u = new SpeechSynthesisUtterance(text);
+      const v = pickVoice();
+      if (v) u.voice = v;
+      u.lang = (v && v.lang) || 'zh-CN';
+      u.onend = () => res();
+      u.onerror = () => res();
+      window.speechSynthesis.speak(u);
+      setTimeout(res, Math.min(8000, Math.max(1200, text.length * 200)));
+    } catch (_) { res(); }
+  });
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognizer = null, recognizing = false;
+  const micBtn = () => document.getElementById('hatching-chat-mic');
+  const micStatus = () => document.getElementById('hatching-mic-status');
+  const setMicStatus = (t) => { const el = micStatus(); if (!el) return; if (!t) { el.hidden = true; el.textContent = ''; } else { el.hidden = false; el.textContent = t; } };
+  const startAsr = (onResult) => {
+    if (!SR) { setMicStatus('当前环境不支持语音输入，请打字'); return false; }
+    if (recognizing) return false;
+    try {
+      recognizer = new SR();
+      recognizer.lang = 'zh-CN';
+      recognizer.interimResults = true;
+      recognizer.continuous = false;
+      recognizer.onresult = (e) => {
+        let finalText = '', interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const r = e.results[i];
+          if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript;
+        }
+        onResult(finalText || interim, !!finalText);
+      };
+      recognizer.onerror = (ev) => { recognizing = false; micBtn()?.classList.remove('recording');
+        const m = ev.error === 'not-allowed' ? '没有麦克风权限，请打字' : ev.error === 'no-speech' ? '没听清，再试一次或打字' : `语音识别失败（${ev.error}），请打字`;
+        setMicStatus(m); };
+      recognizer.onend = () => { recognizing = false; micBtn()?.classList.remove('recording'); };
+      recognizer.start();
+      recognizing = true;
+      micBtn()?.classList.add('recording');
+      setMicStatus('听你说…');
+      return true;
+    } catch (_) { recognizing = false; setMicStatus('语音识别初始化失败，请打字'); return false; }
+  };
+  const stopAsr = () => { if (!recognizer || !recognizing) return; try { recognizer.stop(); } catch(_) {} };
+
+  let skipFired = false, skipResolve;
+  const skipSignal = new Promise(res => skipResolve = res);
+  document.getElementById('hatching-skip').onclick = () => { skipFired = true; if (window.speechSynthesis) window.speechSynthesis.cancel(); stopAsr(); skipResolve({ __skipped: true }); };
+  const raceSkip = (p) => Promise.race([p, skipSignal]);
+
+  show('orb');
+  const r1 = await raceSkip(new Promise(res => { document.getElementById('hatching-orb').onclick = () => res('awoken'); }));
+  if (skipFired || r1?.__skipped) return null;
+
+  show('pick');
+  const grid = document.getElementById('hatching-npc-grid');
+  grid.innerHTML = _HATCHING_NPC_ORDER.map(id => `
+    <div class="hatching-npc-card" data-npc="${id}">
+      <img src="../assets/characters/${id}.svg" alt="${id}" draggable="false">
+      <div class="hatching-npc-name">${_HATCHING_NPC_META[id].zh}</div>
+    </div>`).join('');
+  const chosen = await raceSkip(new Promise(res => {
+    grid.querySelectorAll('.hatching-npc-card').forEach(c => c.onclick = () => res(c.dataset.npc));
+  }));
+  if (skipFired || chosen?.__skipped) return null;
+
+  show('hatch');
+  document.getElementById('hatching-npc-reveal').src = `../assets/characters/${chosen}.svg`;
+  await new Promise(r => setTimeout(r, 2500));
+  if (skipFired) return null;
+
+  show('chat');
+  const meta = _HATCHING_NPC_META[chosen];
+  document.getElementById('hatching-chat-avatar').src = `../assets/characters/${chosen}.svg`;
+  document.getElementById('hatching-chat-name').textContent = meta.zh;
+  const stream = document.getElementById('hatching-chat-stream');
+  const inputBox = document.getElementById('hatching-chat-input-wrap');
+  const input = document.getElementById('hatching-chat-input');
+  const sendBtn = document.getElementById('hatching-chat-send');
+  const chipsBox = document.getElementById('hatching-chat-chips');
+
+  const bubble = (text, who) => {
+    const d = document.createElement('div');
+    d.className = `hatching-msg ${who}`;
+    d.textContent = text;
+    stream.appendChild(d);
+    stream.scrollTop = stream.scrollHeight;
+  };
+  const npcSay = async (text) => {
+    await new Promise(r => setTimeout(r, 400));
+    if (skipFired) return;
+    bubble(text, 'npc');
+    speakTts(text);
+  };
+  const askText = (prompt, ph = '') => raceSkip(new Promise(async res => {
+    await npcSay(prompt);
+    if (skipFired) return;
+    input.value = ''; input.placeholder = ph;
+    inputBox.hidden = false; chipsBox.hidden = true; setMicStatus('');
+    setTimeout(() => input.focus(), 30);
+    const mic = micBtn();
+    const done = () => { const v = input.value.trim(); if (!v && !ph) return;
+      bubble(v || ph, 'user'); inputBox.hidden = true; setMicStatus('');
+      input.onkeydown = null; sendBtn.onclick = null; if (mic) mic.onclick = null; stopAsr(); res(v); };
+    input.onkeydown = (e) => { if (e.key === 'Enter') done(); };
+    sendBtn.onclick = done;
+    if (mic) mic.onclick = () => { if (recognizing) { stopAsr(); return; }
+      startAsr((t, fin) => { input.value = t; if (fin) setMicStatus('听到了 ✓'); }); };
+  }));
+  const askChips = (prompt, options, { multi = false, confirmLabel = '就这些' } = {}) =>
+    raceSkip(new Promise(async res => {
+      await npcSay(prompt); if (skipFired) return;
+      inputBox.hidden = true;
+      chipsBox.innerHTML = options.map(o => `<div class="hatching-chip" data-value="${o.value}">${o.label}</div>`).join('')
+        + (multi ? `<div class="hatching-chip confirm" data-confirm="1">${confirmLabel}</div>` : '');
+      chipsBox.hidden = false;
+      const selected = new Set();
+      chipsBox.querySelectorAll('.hatching-chip').forEach(chip => chip.onclick = () => {
+        if (chip.dataset.confirm) {
+          const picks = [...selected];
+          const label = picks.length ? picks.map(v => options.find(o => o.value === v)?.label).join('、') : '（先不装）';
+          bubble(label, 'user'); chipsBox.hidden = true; res(picks); return;
+        }
+        if (multi) { const v = chip.dataset.value;
+          if (selected.has(v)) { selected.delete(v); chip.classList.remove('selected'); }
+          else { selected.add(v); chip.classList.add('selected'); }
+        } else { const v = chip.dataset.value; bubble(chip.textContent, 'user'); chipsBox.hidden = true; res(v); }
+      });
+    }));
+
+  await npcSay(meta.greet); if (skipFired) return null;
+  const name = await askText('先告诉我，你叫什么？', 'owner');
+  if (skipFired || name?.__skipped) return null;
+  const displayName = name || 'owner';
+  await npcSay(`好的，${displayName}。`);
+  const vaultRaw = await askText('你的 Vault（所有笔记和卡片）放哪？直接回车就用默认 ~/PiOS', '~/PiOS');
+  if (skipFired || vaultRaw?.__skipped) return null;
+  const vault = (vaultRaw && vaultRaw !== '~/PiOS') ? vaultRaw : '';
+  const runtime = await askChips('用哪个 AI 引擎跑我？', [
+    { value: 'claude', label: 'Claude Code CLI（推荐）' },
+    { value: 'codex',  label: 'Codex CLI' },
+    { value: 'both',   label: '两个都要' },
+  ]);
+  if (skipFired || runtime?.__skipped) return null;
+  const plugins = await askChips('最后，要装哪些插件？（可多选）', [
+    { value: 'browser', label: '浏览器' },
+    { value: 'wechat',  label: '微信' },
+    { value: 'health',  label: 'Apple 健康' },
+    { value: 'photos',  label: '照片（Immich）' },
+  ], { multi: true, confirmLabel: '就这些，开装 →' });
+  if (skipFired || plugins?.__skipped) return null;
+  await npcSay('好的！先去把家安顿好，稍等——');
+  await new Promise(r => setTimeout(r, 600));
+  return { npc: chosen, name: displayName, vault, runtime, plugins };
+}
+
+document.getElementById('launch').onclick = async () => {
+  document.getElementById('launch').style.display = 'none';
+  document.getElementById('summary').style.display = 'none';
+  const r = await runHatchingCeremony();
+  document.getElementById('hatching-stage').hidden = true;
+  const sum = document.getElementById('summary');
+  sum.textContent = r ? `✓ 完成！收到：\n${JSON.stringify(r, null, 2)}` : '↩ 跳过了仪式';
+  sum.style.display = 'block';
+  document.getElementById('launch').style.display = 'block';
+  document.getElementById('launch').textContent = '▶ 再来一次';
+};
+</script>
+</body>
+</html>

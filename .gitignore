@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+tests/.pytest_cache/
+.backup-pre-*/
+**/.backup-pre-*/
+Pi/State/
+Pi/Log/
+Pi/Inbox/
+__pycache__/
+*.pyc
+
+# 2026-04-28: owner-specific sanitize-lint patterns (NOT public)
+.pios-private/
+sanitize-patterns.txt
+
+# Test fixture vault: skeleton dirs only, dynamic state auto-created at test time
+tests/fixtures/vault/Pi/State/*
+!tests/fixtures/vault/Pi/State/.gitkeep
+tests/fixtures/vault/Pi/Log/

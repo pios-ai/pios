@@ -1,0 +1,60 @@
+#!/bin/bash
+# Pre-commit hook: two gates run on every commit.
+#
+# 1. sanitize-lint.sh — blocks any staged content that contains owner-specific
+#    PII (real names / wxids / private hostnames / paths / IPs / credentials /
+#    half-anonymized {owner}<surname> patterns / known life events / specific
+#    health values). Replaces the previous "human or codex review" loop.
+#
+# 2. p6-smoke-test.js — for changes touching chitchat / greet / pi-route /
+#    presence / pi-pulse / main.js, runs a 15-case behavioural smoke test
+#    to guard against regressions.
+#
+# 启用：git config core.hooksPath .githooks (见 .githooks/README.md)
+# 绕过：git commit --no-verify (不推荐；紧急时用，记得事后补测)
+
+set -e
+
+# ── Gate 1: sanitize-lint (always runs on every commit) ────────────────────
+
+if [ -x scripts/sanitize-lint.sh ]; then
+  if ! bash scripts/sanitize-lint.sh --staged-only; then
+    echo ""
+    echo "❌ sanitize-lint blocked this commit — staged content contains PII."
+    echo "   Fix the lines above, or override one specific pattern via:"
+    echo "       PIOS_LINT_ALLOW='label1,label2' git commit ..."
+    echo "   Hard bypass (NOT recommended for OSS-bound code):"
+    echo "       git commit --no-verify"
+    exit 1
+  fi
+fi
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+
+# 哪些文件改动触发 unit test 跑（fast subset，只跑 test/unit/*.test.js，~3s）
+# 触发：staged 改了 backend/* / main/* / test/unit/*.test.js
+SHOULD_RUN=0
+if echo "$STAGED" | grep -qE "^(backend/|main/|test/unit/)"; then
+  SHOULD_RUN=1
+fi
+
+if [ "$SHOULD_RUN" -eq 0 ]; then
+  exit 0
+fi
+
+echo "[pre-commit] staged 改动触发 unit tests"
+echo ""
+
+# 跑 unit tests only（不跑 integration 给 mkdtemp 的 owner-complete 节省时间）
+if ! npm run test:unit --silent; then
+  echo ""
+  echo "❌ unit tests 失败 → 阻止 commit"
+  echo ""
+  echo "修好代码让测试绿再 commit。"
+  echo "紧急绕过（不推荐）：git commit --no-verify"
+  exit 1
+fi
+
+echo ""
+echo "✅ unit tests 全绿，允许 commit 继续"
+exit 0
