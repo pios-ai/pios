@@ -1,0 +1,25 @@
+# test-plugin — minimal stub for verifying plugin registry dispatch.
+#
+# This plugin exists only to prove that adding a new plugin to
+# backend/plugins/ is sufficient for it to be picked up by the registry
+# and fired via pi-triage-pregate.sh — without modifying core code.
+#
+# fire_mode controls whether the gate always fires (for smoke tests).
+# Set to 'never' in normal operation so it does not pollute real triage runs.
+
+id: test-plugin
+name: Test Plugin (stub)
+category: test
+description: Minimal gate/ingest stub for registry smoke tests. Not a real data source.
+
+provides:
+  card_sources: []
+  data_paths: {}
+
+triage_hooks:
+  on_gate:
+    script: scripts/gate.sh
+    timeout_sec: 3
+  on_ingest:
+    script: scripts/ingest.sh
+    timeout_sec: 5

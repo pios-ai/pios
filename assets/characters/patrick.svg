@@ -1,0 +1,87 @@
+<svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- 身体渐变：头顶偏亮 → 下半更饱和（卡通打光）-->
+        <radialGradient id="patrickBodyGrad" cx="50%" cy="30%" r="70%">
+          <stop offset="0%"  stop-color="#FFC9D6"/>
+          <stop offset="55%" stop-color="#F5A8B8"/>
+          <stop offset="100%" stop-color="#DE8D9E"/>
+        </radialGradient>
+        <!-- 裤衩 clip：同 body polygon，下半截露出花纹 -->
+        <clipPath id="patrickBodyClip">
+          <polygon points="50,6 60,36 92,38 68,58 78,92 50,72 22,92 32,58 8,38 40,36"/>
+        </clipPath>
+      </defs>
+      <!-- 身体：圆角五角星（顶=头顶，左右尖=胳膊，底左右尖=腿） · 保留 .body class 不动 pose CSS-->
+      <polygon class="body"
+        points="50,6 60,36 92,38 68,58 78,92 50,72 22,92 32,58 8,38 40,36"
+        fill="url(#patrickBodyGrad)" stroke="#B44F6B" stroke-width="2.8"
+        stroke-linejoin="round" stroke-linecap="round" />
+      <!-- ── 花裤衩（绿底紫花）· clip 到 body 不外溢 -->
+      <g clip-path="url(#patrickBodyClip)">
+        <!-- 绿色裤衩底（下半 + 稍微盖到腿上）-->
+        <rect x="0" y="64" width="100" height="36" fill="#87C36B"/>
+        <!-- 裤腰弧 -->
+        <path d="M 20 64 Q 50 69 80 64 L 80 68 Q 50 73 20 68 Z" fill="#6FA254"/>
+        <!-- 紫色花朵装饰（4 朵）-->
+        <g fill="#B56BC1" opacity="0.9">
+          <!-- 花 1 -->
+          <circle cx="30" cy="76" r="2.2"/>
+          <circle cx="27" cy="74" r="1.8"/>
+          <circle cx="33" cy="74" r="1.8"/>
+          <circle cx="28" cy="78" r="1.8"/>
+          <circle cx="32" cy="78" r="1.8"/>
+          <!-- 花 2 -->
+          <circle cx="50" cy="80" r="2.2"/>
+          <circle cx="47" cy="78" r="1.8"/>
+          <circle cx="53" cy="78" r="1.8"/>
+          <circle cx="48" cy="82" r="1.8"/>
+          <circle cx="52" cy="82" r="1.8"/>
+          <!-- 花 3 -->
+          <circle cx="70" cy="75" r="2.2"/>
+          <circle cx="67" cy="73" r="1.8"/>
+          <circle cx="73" cy="73" r="1.8"/>
+          <circle cx="68" cy="77" r="1.8"/>
+          <circle cx="72" cy="77" r="1.8"/>
+        </g>
+        <!-- 花芯（黄） -->
+        <g fill="#FFE35A">
+          <circle cx="30" cy="76" r="0.9"/>
+          <circle cx="50" cy="80" r="0.9"/>
+          <circle cx="70" cy="75" r="0.9"/>
+        </g>
+      </g>
+      <!-- ── 肚脐（短竖线）-->
+      <line x1="50" y1="55" x2="50" y2="59" stroke="#B44F6B" stroke-width="1.3" stroke-linecap="round" opacity="0.75"/>
+      <!-- ── 眉骨：左右眼正中短 V 型阴影（动画片派大星的招牌"鼻梁"）-->
+      <path d="M 46 30 Q 50 35 54 30" fill="none"
+        stroke="#B44F6B" stroke-width="1.3" stroke-linecap="round" opacity="0.6"/>
+      <!-- 左眼 · 更大 + 更靠近（卡通风）-->
+      <g class="eye-l">
+        <ellipse cx="43" cy="40" rx="5.2" ry="6.2" fill="#fff" stroke="#1a1a2a" stroke-width="1"/>
+        <circle class="iris-l" cx="43.5" cy="40.5" r="2.6" fill="#1a1a2a"/>
+        <circle cx="44.5" cy="38.8" r="1.1" fill="#fff"/>
+      </g>
+      <!-- 右眼 -->
+      <g class="eye-r">
+        <ellipse cx="57" cy="40" rx="5.2" ry="6.2" fill="#fff" stroke="#1a1a2a" stroke-width="1"/>
+        <circle class="iris-r" cx="56.5" cy="40.5" r="2.6" fill="#1a1a2a"/>
+        <circle cx="57.5" cy="38.8" r="1.1" fill="#fff"/>
+      </g>
+      <!-- 嘴（宽笑弧）· 保留 .mouth class；talking scaleY 放大 = 张嘴 -->
+      <path class="mouth" d="M 40 50 Q 50 56 60 50" fill="none"
+        stroke="#1a1a2a" stroke-width="1.6" stroke-linecap="round"/>
+      <!-- 嘴装饰：小方牙（不在 .mouth class 内，不参与 talking 变换，避免搞怪）-->
+      <g class="patrick-teeth" opacity="0.95">
+        <rect x="47.3" y="50.2" width="2.1" height="2.2" fill="#fff" stroke="#8B3850" stroke-width="0.3"/>
+        <rect x="50.6" y="50.2" width="2.1" height="2.2" fill="#fff" stroke="#8B3850" stroke-width="0.3"/>
+      </g>
+      <!-- 腮红（左右各一抹粉红）-->
+      <ellipse class="patrick-blush" cx="32" cy="48" rx="3" ry="1.8" fill="#F28AA8" opacity="0.45"/>
+      <ellipse class="patrick-blush" cx="68" cy="48" rx="3" ry="1.8" fill="#F28AA8" opacity="0.45"/>
+      <!-- 左手（胳膊尖上方的圆球，叠加态）-->
+      <circle class="hand-l" cx="14" cy="46" r="5.8"
+        fill="#F5A8B8" stroke="#C46686" stroke-width="2"/>
+      <!-- 右手 -->
+      <circle class="hand-r" cx="86" cy="46" r="5.8"
+        fill="#F5A8B8" stroke="#C46686" stroke-width="2"/>
+    </svg>

@@ -1,0 +1,28 @@
+# Diary plugin
+#
+# 消费由 daily-diary-engine（凌晨 cron）从各 pipeline 产出汇总生成的每日日记。
+# 日记位于 {owner}/Personal/Daily/{date}.md；triage 通过 gate/ingest hook
+# 感知新日记，并决定是否需要 Owner 关注（风险预警、焦点对齐等）。
+
+id: diary
+name: 每日日记
+category: diary
+description: 每日日记新产出时触发 triage 决策，读取焦点与风险预警
+
+# ── Phase-3c-4 registry migration (2026-04-28) ────────────────────────────
+# 参照 wechat/health/ecommerce/intel pilot 模式迁移。
+# 见 docs/components/plugin-system.md Phase 3c-4
+
+provides:
+  card_sources: [diary-pipeline]
+  data_paths:
+    today_diary: "{owner}/Personal/Daily/{date}.md"
+
+triage_hooks:
+  on_gate:
+    script: scripts/triage-gate.sh
+    timeout_sec: 5
+  on_ingest:
+    script: scripts/triage-ingest.sh
+    timeout_sec: 15
+# ─────────────────────────────────────────────────────────────────────────

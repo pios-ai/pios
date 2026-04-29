@@ -1,0 +1,68 @@
+#!/bin/bash
+# Pre-push hook: enforce that **anything destined for a public-facing remote**
+# (any pios-ai-* remote, by convention) has been through sanitize-lint over
+# its full git history — not just the working tree.
+#
+# Why a separate gate from pre-commit:
+#   pre-commit only sees the current staged diff. PII can still hide in
+#   ancestor commits, tag annotations, or commit author/committer emails.
+#   pre-push runs `sanitize-lint --history <ref>` which scans all of that.
+#
+# When this fires:
+#   - `git push pios-ai ...` (any remote whose name starts with "pios-ai")
+#   - For private/personal remotes (e.g. `origin` on a private repo) we skip,
+#     because owner-specific content there is fine.
+#
+# How to override (for the rare legitimate case where the patterns hit a
+# false positive that's not actually PII):
+#   PIOS_LINT_ALLOW='label1,label2' git push pios-ai ...
+#
+# Hard bypass (DO NOT use for the public OSS remote):
+#   git push --no-verify pios-ai ...
+
+set -euo pipefail
+
+remote="$1"
+url="$2"
+
+# Only gate pushes to pios-ai-prefixed remotes (the public OSS remote).
+case "$remote" in
+  pios-ai|pios-ai-*|pios-ai/*) ;;
+  *)
+    # Private remote — skip the public-grade gate.
+    exit 0
+    ;;
+esac
+
+# Read the refs being pushed (one line per ref):
+#   <local-ref> <local-sha> <remote-ref> <remote-sha>
+#
+# We need to scan the local-ref's history. If local-sha is the all-zero sha
+# (delete), skip — deletes can't add PII.
+ZERO=0000000000000000000000000000000000000000
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$local_ref" ] && continue
+  [ "$local_sha" = "$ZERO" ] && continue
+
+  echo "[pre-push] sanitize-lint history scan: $local_ref → $remote (public)"
+  if ! bash scripts/sanitize-lint.sh --history "$local_sha"; then
+    echo ""
+    echo "❌ pre-push blocked: history of $local_ref contains PII."
+    echo ""
+    echo "   This includes ancestor commits, tag annotations, or"
+    echo "   commit author/committer emails — not just the latest commit."
+    echo ""
+    echo "   Two paths forward:"
+    echo "   1. If pushing the OSS release: use the orphan-squash flow"
+    echo "      documented in Pi/Config/pios-oss-release-flow.md"
+    echo "      (creates a single clean commit, drops history)."
+    echo "   2. If a single commit added PII: rebase / amend, then re-push."
+    echo ""
+    echo "   DO NOT use --no-verify for pios-ai-* remotes."
+    exit 1
+  fi
+done
+
+echo "[pre-push] ✅ history clean — push allowed"
+exit 0
