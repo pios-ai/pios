@@ -1,0 +1,28 @@
+# Intel plugin
+#
+# Surfaces research/intelligence workspace reports to core triage through the
+# plugin registry. The intel/radar scheduled work stays managed by pios.yaml;
+# this plugin only provides deterministic gate/ingest hooks.
+
+id: intel
+name: 情报扫描（Intel）
+category: intelligence
+description: 当 intel workspace 出现新调研/扫描报告时触发 triage 决策
+
+# ── Phase-3c-3 registry migration (2026-04-28) ───────────────────────────
+# 参照 wechat / health / ecommerce pilot 模式。见 docs/components/plugin-system.md
+
+provides:
+  card_sources: [intel-pipeline, intel-report]
+  data_paths:
+    workspace: "Pi/Agents/intel/workspace/"
+    dedup_index: "Pi/Agents/intel/workspace/"
+
+triage_hooks:
+  on_gate:
+    script: scripts/triage-gate.sh
+    timeout_sec: 5
+  on_ingest:
+    script: scripts/triage-ingest.sh
+    timeout_sec: 10
+# ─────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html><head><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,system-ui,sans-serif;background:transparent}
+.bar{display:flex;align-items:center;gap:10px;padding:8px 16px;background:rgba(42,42,42,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:28px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.icon{color:#4a9eff;font-size:18px;flex-shrink:0}
+input{flex:1;background:none;border:none;color:#fff;font-size:14px;outline:none}
+input::placeholder{color:rgba(255,255,255,0.4)}
+.send{width:28px;height:28px;border-radius:50%;border:none;background:#4a9eff;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.send:hover{opacity:0.85}
+</style></head><body>
+<div class="bar">
+  <span class="icon">✦</span>
+  <input id="q" type="text" placeholder="Talk to Pi..." autofocus>
+  <button class="send" id="s">↑</button>
+</div>
+<script>
+const { ipcRenderer } = require('electron');
+const q = document.getElementById('q');
+const s = document.getElementById('s');
+function send() {
+  const t = q.value.trim();
+  if (!t) return;
+  ipcRenderer.send('quick-send', t);
+}
+s.onclick = send;
+q.onkeydown = (e) => {
+  if (e.key === 'Escape') { e.preventDefault(); ipcRenderer.send('quick-dismiss'); }
+  if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); send(); }
+};
+</script>
+</body></html>

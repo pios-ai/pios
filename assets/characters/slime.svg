@@ -1,0 +1,20 @@
+<svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path class="body-shape" d="M 22 80 C 14 60, 36 14, 50 14 C 64 14, 86 60, 78 80 Z" fill="#5AB8E8" stroke="#2A7FB8" stroke-width="2"/>
+      <ellipse cx="40" cy="28" rx="6" ry="4" fill="#A8DCF0" opacity="0.8"/>
+      <g class="eye-l">
+        <ellipse class="iris-l" cx="42" cy="50" rx="3" ry="5" fill="#0A0A0A"/>
+        <circle cx="43" cy="48" r="1" fill="#FFFFFF"/>
+      </g>
+      <g class="eye-r">
+        <ellipse class="iris-r" cx="58" cy="50" rx="3" ry="5" fill="#0A0A0A"/>
+        <circle cx="59" cy="48" r="1" fill="#FFFFFF"/>
+      </g>
+      <path class="mouth" d="M 42 62 Q 50 72 58 62" fill="#1A3A5A" stroke="#0A1A2A" stroke-width="1"/>
+      <g class="bell">
+        <circle cx="50" cy="68" r="2.5" fill="#F0D020" stroke="#8A6E10" stroke-width="0.5"/>
+      </g>
+      <circle class="hand-l" cx="18" cy="68" r="5" fill="#5AB8E8" stroke="#2A7FB8" stroke-width="1.5"/>
+      <circle class="hand-r" cx="82" cy="68" r="5" fill="#5AB8E8" stroke="#2A7FB8" stroke-width="1.5"/>
+      <circle class="spark" cx="50" cy="55" r="1.4" fill="#FFE659"/>
+      <ellipse class="sweat" cx="70" cy="20" rx="1.6" ry="2.4" fill="#D0E8F8" stroke="#2A7FB8" stroke-width="0.5"/>
+    </svg>
