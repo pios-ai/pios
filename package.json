@@ -1,0 +1,138 @@
+{
+  "name": "pios",
+  "productName": "PiOS",
+  "version": "0.8.2",
+  "description": "AI-native personal operating system",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "_note_sync_vault_tools": "2026-04-29 plan c: Vault Pi/Tools 是 SSoT；prebuild 把 Vault → backend/tools，让 bundle 装包时拿到最新（仅供 pios-installer.js 13b 首装 bootstrap 用）。dev 假设 Projects/pios 在 Vault 下；split repo 后改读 ~/.pios/config.json vault_root",
+    "sync-vault-tools": "rsync -a --exclude='__pycache__/' --exclude='*.pyc' --exclude='*.bak*' --exclude='.DS_Store' --exclude='*.swp' ../../Pi/Tools/ backend/tools/",
+    "prebuild": "npm run sync-vault-tools",
+    "prebuild:dir": "npm run sync-vault-tools",
+    "prebuild:dmg": "npm run sync-vault-tools",
+    "_note_test_concurrency_1": "Tests share tests/fixtures/vault/ state files; parallel file execution races (e.g. pi-chitchat setSocial collides with pi-greet bootstrap). --test-concurrency=1 serializes file execution. Tests within a file still run sequentially.",
+    "_note_no_quotes_around_glob": "Globs MUST be unquoted: node --test in node 20 doesn't expand glob patterns itself (added node 21+). Shell does. Single quotes here would pass literal '*.test.js' to node 20 → ENOENT. Both node 20 and 22 work with shell-expanded paths.",
+    "test": "bash scripts/run-tests.sh",
+    "test:unit": "bash scripts/run-tests.sh test/unit",
+    "test:integration": "bash scripts/run-tests.sh test/integration",
+    "test:coverage": "bash scripts/run-tests.sh --coverage",
+    "test:lint": "bash scripts/sanitize-lint.sh",
+    "test:all": "npm run test:lint && npm test",
+    "build": "electron-builder --mac",
+    "build:dir": "electron-builder --mac dir",
+    "build:dmg": "electron-builder --mac dmg",
+    "install:app": "bash scripts/install-app.sh",
+    "deploy": "bash scripts/deploy.sh",
+    "_note_no_postbuild": "postbuild 自动 ditto 到 /Applications/PiOS.app 被主 mac 污染踩雷 2026-04-25，移除；改 DMG 手动装或 dev 模式 npm start",
+    "postinstall": "bash scripts/patch-electron-name.sh"
+  },
+  "build": {
+    "appId": "com.pios-ai.pios",
+    "productName": "PiOS",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        "dmg",
+        "dir"
+      ],
+      "extendInfo": {
+        "NSUserNotificationAlertStyle": "alert",
+        "NSAppleEventsUsageDescription": "PiOS 需要打开 Terminal 跑环境安装脚本（如 Homebrew）"
+      }
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "pios-installer.js",
+      "browser-preload.js",
+      "pios-home.html",
+      "quick-input.html",
+      "auth-dialog.html",
+      "main/**",
+      "renderer/**",
+      "backend/**",
+      "modules/**",
+      "assets/**",
+      "vendor/**",
+      "node_modules/**",
+      {
+        "from": "node_modules/three",
+        "to": "node_modules/three",
+        "filter": [
+          "examples/jsm/**/*"
+        ]
+      },
+      "package.json",
+      "icon.png",
+      "tray-iconTemplate.png",
+      "tray-iconTemplate@2x.png"
+    ],
+    "asarUnpack": [
+      "node_modules/pdf2json/**",
+      "node_modules/xlsx/**",
+      "node_modules/mammoth/**",
+      "renderer/assets/**",
+      "node_modules/three/examples/jsm/libs/draco/**",
+      "modules/afterward/**",
+      "backend/tools/**"
+    ],
+    "extraResources": [
+      {
+        "from": "${env.HOME}/qwen-voice",
+        "to": "qwen-voice",
+        "filter": [
+          "**/*",
+          "!**/*.bak-*",
+          "!**/*.new",
+          "!share/**",
+          "!ref_voices/owner.wav",
+          "!ref_voices/feixia.wav",
+          "!ref_voices/jupiter*.wav",
+          "!ref_voices/pi.wav",
+          "!ref_voices/xiaodou.wav"
+        ]
+      },
+      {
+        "from": "${env.HOME}/.cache/huggingface/hub/models--mlx-community--whisper-large-v3-turbo",
+        "to": "qwen-voice-models/hub/models--mlx-community--whisper-large-v3-turbo"
+      },
+      {
+        "from": "${env.HOME}/.cache/huggingface/hub/models--mlx-community--Qwen3-TTS-12Hz-0.6B-CustomVoice-4bit",
+        "to": "qwen-voice-models/hub/models--mlx-community--Qwen3-TTS-12Hz-0.6B-CustomVoice-4bit"
+      },
+      {
+        "from": "${env.HOME}/.cache/huggingface/hub/models--mlx-community--Qwen3-TTS-12Hz-0.6B-Base-4bit",
+        "to": "qwen-voice-models/hub/models--mlx-community--Qwen3-TTS-12Hz-0.6B-Base-4bit"
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "author": "PiOS",
+  "dependencies": {
+    "@pixiv/three-vrm": "^3.5.2",
+    "form-data": "^4.0.5",
+    "gray-matter": "^4.0.3",
+    "https-proxy-agent": "^7.0.6",
+    "js-yaml": "^4.1.1",
+    "mammoth": "^1.12.0",
+    "marked": "^15.0.0",
+    "node-pty": "^1.1.0",
+    "pdf-parse": "^2.4.5",
+    "pdf2json": "^4.0.2",
+    "three": "^0.184.0",
+    "uuid": "^13.0.0",
+    "ws": "^8.20.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.8",
+    "jsdom": "^29.1.0"
+  }
+}

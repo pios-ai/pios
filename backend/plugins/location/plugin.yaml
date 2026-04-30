@@ -1,0 +1,30 @@
+# Location plugin
+#
+# Surfaces location digest changes to core triage through the plugin
+# registry. The location collector remains outside this plugin; this layer
+# only tells triage when a digest file changed.
+
+id: location
+name: 位置摘要
+category: location
+description: Location pipeline 产出更新时触发 triage，提供最新位置摘要文件
+platform: macos
+
+# ── Phase-3c-8 registry migration (2026-04-29) ───────────────────────────
+# 参照 wechat/health/ecommerce/intel/diary/photos/content/browser 模式迁移。
+# 见 docs/components/plugin-system.md Phase 3c
+
+provides:
+  card_sources: [location-pipeline]
+  data_paths:
+    today_location: "{owner}/Pipeline/AI_Location_Digest/daily_location/{date}.md"
+    location_dir: "{owner}/Pipeline/AI_Location_Digest/"
+
+triage_hooks:
+  on_gate:
+    script: scripts/triage-gate.sh
+    timeout_sec: 5
+  on_ingest:
+    script: scripts/triage-ingest.sh
+    timeout_sec: 10
+# ─────────────────────────────────────────────────────────────────────────
