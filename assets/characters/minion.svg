@@ -1,0 +1,69 @@
+<svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- 身体（黄色胶囊 · 单圆角矩形） -->
+      <rect class="body-shape" x="22" y="10" width="56" height="78" rx="28" ry="28"
+        fill="#FFE659" stroke="#A38A00" stroke-width="2"/>
+      <!-- 蓝色背带裤（身体下半，path 跟随身体底部圆弧） -->
+      <path class="overalls" d="M 22 54 L 78 54 L 78 60 A 28 28 0 0 1 22 60 Z"
+        fill="#4A7EB8" stroke="#2A5A88" stroke-width="1.5"/>
+      <!-- 左背带 -->
+      <rect class="strap-l" x="33" y="40" width="4.5" height="14"
+        fill="#4A7EB8" stroke="#2A5A88" stroke-width="1.2"/>
+      <!-- 右背带 -->
+      <rect class="strap-r" x="62.5" y="40" width="4.5" height="14"
+        fill="#4A7EB8" stroke="#2A5A88" stroke-width="1.2"/>
+      <!-- 背带金扣 -->
+      <circle cx="35.25" cy="45" r="1" fill="#F0D020"/>
+      <circle cx="64.75" cy="45" r="1" fill="#F0D020"/>
+      <!-- 一根头发（小黄人经典） -->
+      <path class="hair" d="M 48 10 Q 50 5 52 10"
+        fill="none" stroke="#5A4A00" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- 左脚（黑靴） -->
+      <ellipse class="foot-l" cx="38" cy="93" rx="8" ry="3.5"
+        fill="#1a1a1a" stroke="#000000" stroke-width="1"/>
+      <!-- 右脚 -->
+      <ellipse class="foot-r" cx="62" cy="93" rx="8" ry="3.5"
+        fill="#1a1a1a" stroke="#000000" stroke-width="1"/>
+      <!-- 护目镜黑带（头上横穿） -->
+      <rect class="goggle-strap" x="23" y="30.5" width="54" height="3"
+        fill="#303030"/>
+      <!-- 左镜框（银色） -->
+      <circle class="goggle-l" cx="40" cy="32" r="9"
+        fill="#E8E8E8" stroke="#5A5A5A" stroke-width="2.5"/>
+      <!-- 右镜框 -->
+      <circle class="goggle-r" cx="60" cy="32" r="9"
+        fill="#E8E8E8" stroke="#5A5A5A" stroke-width="2.5"/>
+      <!-- 镜框连接桥 -->
+      <rect class="goggle-bridge" x="48" y="31" width="4" height="2"
+        fill="#5A5A5A"/>
+      <!-- 左眼（护目镜内白圆 + 黑瞳） -->
+      <g class="eye-l">
+        <circle cx="40" cy="32" r="6" fill="#ffffff"/>
+        <circle class="iris-l" cx="41" cy="33" r="2.5" fill="#1a1a2a"/>
+        <circle cx="41.5" cy="32" r="0.7" fill="#ffffff"/>
+      </g>
+      <!-- 右眼 -->
+      <g class="eye-r">
+        <circle cx="60" cy="32" r="6" fill="#ffffff"/>
+        <circle class="iris-r" cx="59" cy="33" r="2.5" fill="#1a1a2a"/>
+        <circle cx="59.5" cy="32" r="0.7" fill="#ffffff"/>
+      </g>
+      <!-- 嘴（微笑弧 · talking 时张合） -->
+      <path class="mouth" d="M 42 45 Q 50 50 58 45"
+        fill="none" stroke="#1a1a2a" stroke-width="1.8" stroke-linecap="round"/>
+      <!-- 胸口 Gru 徽章（黄扣 · bell class 供 recording 跳动） -->
+      <g class="bell">
+        <rect x="46" y="48" width="8" height="4" rx="1" ry="1"
+          fill="#F0D020" stroke="#8A6E10" stroke-width="0.6"/>
+      </g>
+      <!-- 左手（黑手套） -->
+      <circle class="hand-l" cx="22" cy="68" r="6"
+        fill="#1a1a1a" stroke="#000000" stroke-width="1"/>
+      <!-- 右手 -->
+      <circle class="hand-r" cx="78" cy="68" r="6"
+        fill="#1a1a1a" stroke="#000000" stroke-width="1"/>
+      <!-- 处理光点（胸口附近 processing 时闪） -->
+      <circle class="spark" cx="52" cy="50" r="1.4" fill="#FFE659"/>
+      <!-- 冷汗（alert 时右太阳穴滴） -->
+      <ellipse class="sweat" cx="70" cy="18" rx="1.6" ry="2.4"
+        fill="#5EB8EC" stroke="#2A7FB8" stroke-width="0.5"/>
+    </svg>

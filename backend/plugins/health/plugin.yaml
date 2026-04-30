@@ -1,0 +1,27 @@
+# Health Pipeline plugin
+#
+# 消费由 Apple Health 自动导出 → 每日健康日报（daily_health）生成的结构化摘要。
+# 健康数据采集由 `daily-health-digest` cron task（00:30）负责；
+# triage 只消费 triage-ingest hook 输出的 events，不直接触碰 JSON 原始数据。
+
+id: health
+name: 健康日报摘要
+category: health
+description: 每日解析 Apple Health 健康摘要，若有新报告则触发 triage 决策
+
+# ── Phase-3c-1 registry pilot (2026-04-28) ───────────────────────────────
+# 参照 wechat pilot 模式迁移。见 docs/components/plugin-system.md
+
+provides:
+  card_sources: [health-pipeline]
+  data_paths:
+    today_report: "{owner}/Pipeline/AI_Health_Digest/daily_health/{date}.md"
+
+triage_hooks:
+  on_gate:
+    script: scripts/triage-gate.sh
+    timeout_sec: 5
+  on_ingest:
+    script: scripts/triage-ingest.sh
+    timeout_sec: 15
+# ─────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: test (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install dependencies (skip electron postinstall hook)
+        run: npm ci --ignore-scripts
+        # `postinstall` runs scripts/patch-electron-name.sh which is macOS-only.
+        # Tests don't need Electron — pure node + bash. --ignore-scripts skips it.
+
+      - name: Sanitize-lint (working tree)
+        run: npm run test:lint
+
+      - name: Unit + integration tests (node:test)
+        run: npm test
+
+  coverage:
+    name: coverage report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - name: Run with --experimental-test-coverage
+        run: npm run test:coverage
+        # Reports to stdout. CI keeps the log; humans read summary in the run page.
+
+  sanitize-history:
+    name: sanitize-lint (full history)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sanitize-lint (HEAD history)
+        run: bash scripts/sanitize-lint.sh --history HEAD

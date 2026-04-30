@@ -1,0 +1,31 @@
+node_modules/
+dist/
+.cache/
+.DS_Store
+*.log
+tests/.pytest_cache/
+test-results/
+.backup-pre-*/
+**/.backup-pre-*/
+Pi/State/
+Pi/Log/
+Pi/Inbox/
+__pycache__/
+*.pyc
+
+# 2026-04-28: owner-specific sanitize-lint patterns (NOT public)
+.pios-private/
+sanitize-patterns.txt
+
+# Test fixture vault: skeleton dirs only, dynamic state auto-created at test time
+tests/fixtures/vault/Pi/State/*
+!tests/fixtures/vault/Pi/State/.gitkeep
+tests/fixtures/vault/Pi/Log/
+
+# Pi/ belongs only in the vault (Pi/Plugins, Pi/Tools, etc.)
+# Worker accidents that drop these into Projects/pios/ should not commit
+Pi/
+
+# Xcode user-specific state (per-developer cursor / scheme prefs; leaks username via path)
+**/xcuserdata/
+*.xcworkspace/xcuserdata/

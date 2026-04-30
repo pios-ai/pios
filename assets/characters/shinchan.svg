@@ -1,0 +1,64 @@
+<svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- 身体（红色 T 恤 · 圆角矩形） -->
+      <rect class="body-shape" x="30" y="52" width="40" height="24" rx="6" ry="6"
+        fill="#E84040" stroke="#B02020" stroke-width="1.8"/>
+      <!-- T 恤领口 V -->
+      <path d="M 44 52 L 50 56 L 56 52" fill="none"
+        stroke="#B02020" stroke-width="1" stroke-linecap="round"/>
+      <!-- 黄色短裤 -->
+      <rect class="shorts" x="32" y="74" width="36" height="12" rx="4" ry="4"
+        fill="#FFD830" stroke="#C0A020" stroke-width="1.2"/>
+      <!-- 裤缝中线 -->
+      <line x1="50" y1="74" x2="50" y2="86" stroke="#C0A020" stroke-width="0.8"/>
+      <!-- 左腿（肉色） -->
+      <rect x="35" y="85" width="8" height="6" rx="2" fill="#FDDCB1" stroke="#D4A06A" stroke-width="0.8"/>
+      <!-- 右腿 -->
+      <rect x="57" y="85" width="8" height="6" rx="2" fill="#FDDCB1" stroke="#D4A06A" stroke-width="0.8"/>
+      <!-- 左鞋（黄色） -->
+      <ellipse class="foot-l" cx="39" cy="94" rx="6" ry="2.5"
+        fill="#FFD830" stroke="#C0A020" stroke-width="1"/>
+      <!-- 右鞋 -->
+      <ellipse class="foot-r" cx="61" cy="94" rx="6" ry="2.5"
+        fill="#FFD830" stroke="#C0A020" stroke-width="1"/>
+      <!-- 头（肉色大圆 · 小新头很大） -->
+      <circle class="head-body" cx="50" cy="30" r="26"
+        fill="#FDDCB1" stroke="#D4A06A" stroke-width="1.8"/>
+      <!-- 黑色短发（锯齿刘海 · 小新标志发型） -->
+      <path class="hair" d="M 26 22 Q 30 8 38 12 Q 42 6 50 10 Q 58 6 62 12 Q 70 8 74 22 L 72 24 Q 66 14 58 16 Q 52 12 46 16 Q 38 14 28 24 Z"
+        fill="#1a1a2a" stroke="#0a0a0a" stroke-width="0.8"/>
+      <!-- 左眉（超粗 · 蜡笔小新招牌毛毛虫眉） -->
+      <ellipse class="brow-l" cx="40" cy="28" rx="8" ry="3.5"
+        fill="#1a1a2a"/>
+      <!-- 右眉 -->
+      <ellipse class="brow-r" cx="60" cy="28" rx="8" ry="3.5"
+        fill="#1a1a2a"/>
+      <!-- 左眼（小豆眼 · 在粗眉下） -->
+      <g class="eye-l">
+        <ellipse cx="40" cy="36" rx="3" ry="3.5" fill="#ffffff" stroke="#1a1a2a" stroke-width="0.8"/>
+        <circle class="iris-l" cx="40.5" cy="36.5" r="1.5" fill="#1a1a2a"/>
+        <circle cx="41" cy="35.5" r="0.5" fill="#ffffff"/>
+      </g>
+      <!-- 右眼 -->
+      <g class="eye-r">
+        <ellipse cx="60" cy="36" rx="3" ry="3.5" fill="#ffffff" stroke="#1a1a2a" stroke-width="0.8"/>
+        <circle class="iris-r" cx="59.5" cy="36.5" r="1.5" fill="#1a1a2a"/>
+        <circle cx="60" cy="35.5" r="0.5" fill="#ffffff"/>
+      </g>
+      <!-- 腮红（左右粉红） -->
+      <ellipse cx="30" cy="40" rx="4" ry="2.2" fill="#F5A0A0" opacity="0.5"/>
+      <ellipse cx="70" cy="40" rx="4" ry="2.2" fill="#F5A0A0" opacity="0.5"/>
+      <!-- 嘴（宽弧笑 · 小新经典嘿嘿笑） -->
+      <path class="mouth" d="M 42 44 Q 50 50 58 44" fill="none"
+        stroke="#1a1a2a" stroke-width="1.4" stroke-linecap="round"/>
+      <!-- 左手（肉色圆球） -->
+      <circle class="hand-l" cx="22" cy="64" r="5.5"
+        fill="#FDDCB1" stroke="#D4A06A" stroke-width="1.4"/>
+      <!-- 右手 -->
+      <circle class="hand-r" cx="78" cy="64" r="5.5"
+        fill="#FDDCB1" stroke="#D4A06A" stroke-width="1.4"/>
+      <!-- 处理光点（processing 时头顶闪烁） -->
+      <circle class="spark" cx="50" cy="4" r="1.4" fill="#FFE659"/>
+      <!-- 冷汗（alert 时右太阳穴滴） -->
+      <ellipse class="sweat" cx="72" cy="18" rx="1.6" ry="2.4"
+        fill="#5EB8EC" stroke="#2A7FB8" stroke-width="0.5"/>
+    </svg>

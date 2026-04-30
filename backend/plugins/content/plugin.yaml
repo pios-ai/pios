@@ -1,0 +1,29 @@
+# Content plugin
+#
+# Surfaces creator workspace changes to triage. The creator agent remains
+# registered in pios.yaml; this plugin only gives core triage a generic
+# gate/ingest interface for new content drafts.
+
+id: content
+name: 内容创作
+category: content
+description: Creator workspace 有新内容稿时触发 triage 决策，读取标题和摘要
+
+# ── Phase-3c registry migration (2026-04-28) ─────────────────────────────
+# 参照 wechat/health/ecommerce/intel/diary/photos pilot 模式迁移。
+# 见 docs/components/plugin-system.md Phase 3c
+
+provides:
+  card_sources: [content-pipeline, creator-output]
+  data_paths:
+    workspace: "Pi/Agents/creator/workspace/"
+    output_dir: "Pi/Output/content/"
+
+triage_hooks:
+  on_gate:
+    script: scripts/triage-gate.sh
+    timeout_sec: 5
+  on_ingest:
+    script: scripts/triage-ingest.sh
+    timeout_sec: 15
+# ─────────────────────────────────────────────────────────────────────────
