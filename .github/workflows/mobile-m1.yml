@@ -1,0 +1,118 @@
+name: Mobile M1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile-backend/**'
+      - 'ios/**'
+      - 'tests/mobile-responsive.spec.js'
+      - 'playwright.config.js'
+      - '.github/workflows/mobile-m1.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mobile-backend/**'
+      - 'ios/**'
+      - 'tests/mobile-responsive.spec.js'
+      - 'playwright.config.js'
+      - '.github/workflows/mobile-m1.yml'
+  workflow_dispatch:
+
+jobs:
+  # ── 1. Node: mobile-backend unit tests ──────────────────────────────────────
+  backend-unit:
+    name: mobile-backend unit tests (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install dependencies (skip electron postinstall hook)
+        run: npm ci --ignore-scripts
+
+      - name: Run mobile-backend unit tests
+        run: node --test mobile-backend/test/unit/server.test.js
+
+  # ── 2. Playwright: mobile-responsive smoke ───────────────────────────────────
+  playwright:
+    name: playwright mobile-responsive
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps webkit chromium
+
+      - name: Start mobile-backend (background)
+        run: |
+          MOBILE_API_TOKEN=ci-test-token PORT=17892 node mobile-backend/server.js &
+          echo "BACKEND_PID=$!" >> $GITHUB_ENV
+          # wait for server ready
+          for i in $(seq 1 10); do
+            curl -sf http://localhost:17892/mobile/ping && break
+            sleep 1
+          done
+
+      - name: Run Playwright tests
+        run: npx playwright test tests/mobile-responsive.spec.js
+        env:
+          PIOS_BACKEND_URL: http://localhost:17892
+          MOBILE_API_TOKEN: ci-test-token
+          # tests/mobile-responsive.spec.js reads PI_API_TOKEN; align with server's MOBILE_API_TOKEN
+          PI_API_TOKEN: ci-test-token
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ── 3. iOS build (macOS runner, on-demand to save minutes) ───────────────────
+  ios-build:
+    name: iOS build (Xcode)
+    runs-on: macos-14
+    # Only run on push to main or workflow_dispatch to save macOS runner minutes
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Build PiOSMobile (simulator, no signing)
+        run: |
+          xcodebuild \
+            -project ios/PiOSMobile.xcodeproj \
+            -scheme PiOSMobile \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            clean build \
+            | xcpretty || true
+
+      - name: Run XCTest (simulator)
+        run: |
+          xcodebuild test \
+            -project ios/PiOSMobile.xcodeproj \
+            -scheme PiOSMobileTests \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty || true

@@ -1,0 +1,67 @@
+#!/bin/bash
+# Pre-commit hook: scan the proposed commit message for owner-specific PII.
+#
+# pre-commit's sanitize-lint checks staged FILE content. Commit message text
+# is its own surface — "fix Abe's bug on abemac" goes straight into git
+# history without scrutiny otherwise.
+#
+# Bypass: PIOS_LINT_ALLOW='abe-word' git commit ...   (allow specific labels)
+# Hard bypass: git commit --no-verify                  (last resort, leaves trail)
+#
+# Patterns mirror scripts/sanitize-lint.sh's owner-specific labels. Keep both
+# in sync — if a pattern is added here that's not in sanitize-lint.sh, files
+# won't be scanned for it.
+
+set -e
+
+MSG_FILE="$1"
+ALLOW="${PIOS_LINT_ALLOW:-}"
+
+# Read commit message, strip comment lines that start with '#' (git's own
+# instructions / template, not part of the actual message).
+MSG=$(grep -v '^#' "$MSG_FILE")
+
+# Each pattern: label:regex (BRE — bash grep -E)
+PATTERNS=(
+  'owner-username:\byishi\b'
+  'abe-word:\bAbe\b'
+  'host-abemac:\babemac\b'
+  'host-abeworker:\babeworker\b'
+  'host-abehost:\babehost\b'
+  'host-abeclaw:\babeclaw\b'
+  'owner-mac-model:AbedeMacBook'
+  'owner-home-linux:/home/abe\b'
+  'wechat-wxid:q7914079'
+  'openclaw-wxid:o9cq801[A-Za-z0-9]+'
+  'tailscale-redis-ip:100\.81\.185\.85'
+)
+
+HITS=()
+for entry in "${PATTERNS[@]}"; do
+  label="${entry%%:*}"
+  regex="${entry#*:}"
+  # Skip if user explicitly allowed this label
+  if [ -n "$ALLOW" ] && [[ ",$ALLOW," == *",$label,"* ]]; then
+    continue
+  fi
+  if echo "$MSG" | grep -qE "$regex"; then
+    HITS+=("[$label] /$regex/")
+  fi
+done
+
+if [ ${#HITS[@]} -gt 0 ]; then
+  echo
+  echo "❌ commit-msg blocked: message contains owner-specific PII"
+  for hit in "${HITS[@]}"; do
+    echo "   - $hit"
+  done
+  echo
+  echo "Rephrase the message to use generic terms (owner, the host, the user)."
+  echo "Override (use sparingly, leaves trail):"
+  echo "    PIOS_LINT_ALLOW='abe-word,host-abemac' git commit ..."
+  echo "Hard bypass (NOT recommended for OSS-bound code):"
+  echo "    git commit --no-verify"
+  exit 1
+fi
+
+exit 0
