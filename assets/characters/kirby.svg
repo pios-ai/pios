@@ -1,0 +1,24 @@
+<svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle class="body-shape" cx="50" cy="48" r="36" fill="#F8B1C0" stroke="#D47E90" stroke-width="2"/>
+      <ellipse class="foot-l" cx="36" cy="88" rx="11" ry="6" fill="#D14B66" stroke="#8A2438" stroke-width="1.5"/>
+      <ellipse class="foot-r" cx="64" cy="88" rx="11" ry="6" fill="#D14B66" stroke="#8A2438" stroke-width="1.5"/>
+      <ellipse class="cheek-l" cx="34" cy="52" rx="5" ry="2.8" fill="#E85A7A" opacity="0.85"/>
+      <ellipse class="cheek-r" cx="66" cy="52" rx="5" ry="2.8" fill="#E85A7A" opacity="0.85"/>
+      <g class="eye-l">
+        <ellipse class="iris-l" cx="42" cy="42" rx="3.5" ry="7" fill="#0A0A0A"/>
+        <ellipse cx="42" cy="39" rx="1.5" ry="2.2" fill="#FFFFFF"/>
+      </g>
+      <g class="eye-r">
+        <ellipse class="iris-r" cx="58" cy="42" rx="3.5" ry="7" fill="#0A0A0A"/>
+        <ellipse cx="58" cy="39" rx="1.5" ry="2.2" fill="#FFFFFF"/>
+      </g>
+      <path class="mouth" d="M 46 56 Q 50 60 54 56" fill="none" stroke="#8A1A32" stroke-width="1.6" stroke-linecap="round"/>
+      <g class="bell">
+        <polygon points="50,62 52.2,66 56.5,66 53,69 54.3,73.2 50,70.7 45.7,73.2 47,69 43.5,66 47.8,66"
+          fill="#F0D020" stroke="#8A6E10" stroke-width="0.5"/>
+      </g>
+      <circle class="hand-l" cx="22" cy="64" r="7" fill="#F8B1C0" stroke="#D47E90" stroke-width="1.6"/>
+      <circle class="hand-r" cx="78" cy="64" r="7" fill="#F8B1C0" stroke="#D47E90" stroke-width="1.6"/>
+      <circle class="spark" cx="50" cy="50" r="1.4" fill="#FFE659"/>
+      <ellipse class="sweat" cx="72" cy="22" rx="1.6" ry="2.4" fill="#5EB8EC" stroke="#2A7FB8" stroke-width="0.5"/>
+    </svg>

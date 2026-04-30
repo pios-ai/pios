@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0a">
+<title>Pi</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;height:100dvh;overflow:hidden;background:#0a0a0a;color-scheme:dark}
+  body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue",sans-serif;color:#f5f5f5;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+  #app{height:100dvh;display:flex;flex-direction:column;background:#0a0a0a}
+  header{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;background:rgba(10,10,10,.86);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid #1f1f1f;position:relative;z-index:5}
+  header .glyph{font-size:24px;line-height:1;color:#fff;text-shadow:0 0 14px rgba(255,255,255,.35);flex:0 0 auto}
+  header .title{display:flex;flex-direction:column;line-height:1.1;min-width:0}
+  header h1{font-size:16px;font-weight:600;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .sub{font-size:11px;color:#777;margin-top:2px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .actions{margin-left:auto;display:flex;gap:8px}
+  .icon-btn{width:34px;height:34px;border-radius:17px;border:none;background:transparent;color:#aaa;font-size:19px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,color .15s}
+  .icon-btn:active{background:#1c1c1e;color:#fff}
+  main{flex:1 1 auto;min-height:0;position:relative;display:flex;flex-direction:column}
+  .view{display:none;flex:1 1 auto;min-height:0;overflow:hidden}
+  .view.active{display:flex}
+  .panel-view{padding:18px 16px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex-direction:column;gap:12px}
+  .home-grid{display:grid;gap:12px}
+  .home-card{border:1px solid #242424;background:#111;border-radius:8px;padding:14px}
+  .home-card .k{font-size:12px;color:#888;margin-bottom:8px}
+  .home-card .v{font-size:15px;line-height:1.45;color:#f2f2f2}
+  .placeholder{margin:auto;text-align:center;color:#6d6d72;font-size:15px;line-height:1.5}
+  .placeholder .big{font-size:38px;margin-bottom:10px;color:#d6d6d6}
+  #chat-view{flex-direction:column}
+  #messages{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;padding:18px 16px 8px;display:flex;flex-direction:column;gap:12px;user-select:text;-webkit-user-select:text}
+  #messages::-webkit-scrollbar{width:0;display:none}
+  .empty{margin:auto;color:#4a4a4a;font-size:14px;text-align:center;line-height:1.6;padding:20px}
+  .empty .big{font-size:48px;margin-bottom:12px;color:#fff;text-shadow:0 0 24px rgba(255,255,255,.3)}
+  .msg{max-width:78%;padding:9px 14px;border-radius:20px;font-size:16px;line-height:1.45;word-wrap:break-word;overflow-wrap:break-word;white-space:pre-wrap;animation:msg-in .18s ease-out}
+  @keyframes msg-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .msg.user{align-self:flex-end;background:linear-gradient(180deg,#0a84ff 0%,#0973e0 100%);color:#fff;border-bottom-right-radius:6px}
+  .msg.pi{align-self:flex-start;background:#1c1c1e;color:#f0f0f0;border-bottom-left-radius:6px}
+  .msg.voice{align-self:flex-start;background:transparent;color:#7a7a7a;font-style:italic;font-size:13.5px;padding:2px 14px;max-width:88%;line-height:1.5;animation:none}
+  .msg.voice::before{content:"voice  ";font-style:normal}
+  .msg.tool{align-self:flex-start;background:transparent;color:#555;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;padding:0 14px;max-width:88%;animation:none}
+  .msg.error{align-self:center;background:#3a0a0a;color:#ff8a80;font-size:13px;border-radius:10px;padding:8px 12px}
+  .msg.streaming::after{content:"|";color:#888;margin-left:1px;animation:caret 1.1s step-end infinite}
+  @keyframes caret{50%{opacity:0}}
+  .typing{align-self:flex-start;color:#666;font-size:13px;padding:6px 14px;display:flex;align-items:center;gap:6px}
+  .typing .dot{width:5px;height:5px;border-radius:50%;background:#666;animation:bounce 1.2s infinite}
+  .typing .dot:nth-child(2){animation-delay:.15s}.typing .dot:nth-child(3){animation-delay:.3s}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+  #composer{flex:0 0 auto;display:flex;align-items:flex-end;gap:8px;padding:8px 12px;background:rgba(10,10,10,.92);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid #1f1f1f;position:relative;z-index:5}
+  #composer.hidden{display:none}
+  #input{flex:1 1 auto;background:#1c1c1e;color:#f5f5f5;border:1px solid #2a2a2a;border-radius:22px;padding:9px 16px;font-size:16px;font-family:inherit;line-height:1.4;outline:none;resize:none;max-height:120px;min-height:40px;transition:border-color .15s,background .15s;-webkit-user-select:text;user-select:text}
+  #input::placeholder{color:#5a5a5a}
+  #input:focus{border-color:#0a84ff;background:#1f1f23}
+  #send{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:none;background:#0a84ff;color:#fff;font-size:17px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s,background .15s,opacity .15s;user-select:none;-webkit-user-select:none}
+  #send:active{transform:scale(.92)}
+  #send:disabled{background:#2a2a2a;color:#555;cursor:not-allowed}
+  #send svg{width:20px;height:20px}
+  nav{flex:0 0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:6px 8px max(6px,env(safe-area-inset-bottom));background:rgba(10,10,10,.96);border-top:.5px solid #202020}
+  .tab{height:48px;border:0;border-radius:8px;background:transparent;color:#777;font-family:inherit;font-size:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+  .tab .ico{font-size:20px;line-height:1}
+  .tab.active{color:#0a84ff;background:#101820}
+  .tab:active{background:#1c1c1e}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="glyph">✦</div>
+    <div class="title">
+      <h1 id="view-title">Pi</h1>
+      <div class="sub" id="status-sub">PiOS Mobile · M2</div>
+    </div>
+    <div class="actions">
+      <button class="icon-btn" id="session-btn" title="会话" aria-label="会话">☰</button>
+      <button class="icon-btn" id="reset-btn" title="新对话" aria-label="新对话">＋</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="view panel-view" id="home-view" data-title="Pi" data-sub="PiOS Mobile">
+      <div class="home-grid">
+        <div class="home-card">
+          <div class="k">状态</div>
+          <div class="v">PiOS Mobile M2 正在搭建中。</div>
+        </div>
+        <div class="home-card">
+          <div class="k">Things Need You</div>
+          <div class="v">即将到来</div>
+        </div>
+        <div class="home-card">
+          <div class="k">入口</div>
+          <div class="v">切到对话 tab 跟 Pi 继续聊。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="chat-view" data-title="对话" data-sub="PiOS Mobile · Chat">
+      <div id="messages" role="log" aria-live="polite">
+        <div class="empty" id="empty">
+          <div class="big">✦</div>
+          <div>跟 Pi 说点什么</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view panel-view" id="tny-view" data-title="TNY" data-sub="Things Need You">
+      <div class="placeholder"><div class="big">⚠</div><div>即将到来</div></div>
+    </section>
+    <section class="view panel-view" id="today-view" data-title="今天" data-sub="Daily Focus">
+      <div class="placeholder"><div class="big">📅</div><div>即将到来</div></div>
+    </section>
+    <section class="view panel-view" id="cards-view" data-title="卡片" data-sub="Cards">
+      <div class="placeholder"><div class="big">📋</div><div>即将到来</div></div>
+    </section>
+  </main>
+
+  <footer id="composer">
+    <textarea id="input" placeholder="说点什么..." rows="1" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" enterkeyhint="send" inputmode="text"></textarea>
+    <button id="send" type="button" aria-label="发送" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+  </footer>
+
+  <nav aria-label="主导航">
+    <button class="tab" data-tab="home" aria-label="Pi"><span class="ico">✦</span><span>Pi</span></button>
+    <button class="tab" data-tab="chat" aria-label="对话"><span class="ico">💬</span><span>对话</span></button>
+    <button class="tab" data-tab="tny" aria-label="TNY"><span class="ico">⚠</span><span>TNY</span></button>
+    <button class="tab" data-tab="today" aria-label="今天"><span class="ico">📅</span><span>今天</span></button>
+    <button class="tab" data-tab="cards" aria-label="卡片"><span class="ico">📋</span><span>卡片</span></button>
+  </nav>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  const views = {
+    home: document.getElementById('home-view'),
+    chat: document.getElementById('chat-view'),
+    tny: document.getElementById('tny-view'),
+    today: document.getElementById('today-view'),
+    cards: document.getElementById('cards-view'),
+  };
+  const tabs = Array.from(document.querySelectorAll('.tab'));
+  const viewTitle = document.getElementById('view-title');
+  const statusSub = document.getElementById('status-sub');
+  const composer = document.getElementById('composer');
+  const messages = document.getElementById('messages');
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('send');
+  const resetBtn = document.getElementById('reset-btn');
+  const sessionBtn = document.getElementById('session-btn');
+
+  function normalizeTab(tab){
+    return Object.prototype.hasOwnProperty.call(views, tab) ? tab : 'home';
+  }
+
+  function setActiveTab(tab, opts){
+    const next = normalizeTab(tab);
+    for (const [name, el] of Object.entries(views)) el.classList.toggle('active', name === next);
+    for (const btn of tabs) btn.classList.toggle('active', btn.dataset.tab === next);
+    const active = views[next];
+    viewTitle.textContent = active.dataset.title || 'Pi';
+    statusSub.textContent = active.dataset.sub || 'PiOS Mobile';
+    composer.classList.toggle('hidden', next !== 'chat');
+    resetBtn.style.display = next === 'chat' ? '' : 'none';
+    sessionBtn.style.display = next === 'chat' ? '' : 'none';
+    if (!opts || opts.persist !== false) {
+      localStorage.setItem('pios-mobile.activeTab', next);
+      if (location.hash !== '#/' + next) history.replaceState(null, '', '#/' + next);
+    }
+    if (next === 'chat') scrollToBottom(true);
+  }
+
+  tabs.forEach(btn => btn.addEventListener('click', () => setActiveTab(btn.dataset.tab)));
+  window.addEventListener('hashchange', () => {
+    const tab = (location.hash || '').replace(/^#\/?/, '').split('/')[0];
+    setActiveTab(tab || 'home', { persist:false });
+    localStorage.setItem('pios-mobile.activeTab', normalizeTab(tab || 'home'));
+  });
+
+  let busy = false;
+  let currentTextEl = null;
+  let typingEl = null;
+  let stickToBottom = true;
+
+  function autoSize(){
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  }
+  function updateSendEnabled(){
+    sendBtn.disabled = busy || input.value.trim().length === 0;
+  }
+  input.addEventListener('input', () => { autoSize(); updateSendEnabled(); });
+
+  messages.addEventListener('scroll', () => {
+    const dist = messages.scrollHeight - messages.scrollTop - messages.clientHeight;
+    stickToBottom = dist < 60;
+  }, { passive:true });
+  function scrollToBottom(force){
+    if (!force && !stickToBottom) return;
+    requestAnimationFrame(() => { messages.scrollTop = messages.scrollHeight; });
+  }
+  messages.addEventListener('touchstart', () => {
+    if (document.activeElement === input) input.blur();
+  }, { passive:true });
+
+  function clearEmpty(){
+    const empty = document.getElementById('empty');
+    if (empty && empty.parentNode) empty.remove();
+  }
+  function restoreEmpty(){
+    messages.innerHTML = '<div class="empty" id="empty"><div class="big">✦</div><div>跟 Pi 说点什么</div></div>';
+  }
+  function addMsg(role, text, extraClass){
+    clearEmpty();
+    const el = document.createElement('div');
+    el.className = 'msg ' + role + (extraClass ? ' ' + extraClass : '');
+    el.textContent = text || '';
+    messages.appendChild(el);
+    scrollToBottom();
+    return el;
+  }
+  function showTyping(){
+    if (typingEl) return;
+    clearEmpty();
+    typingEl = document.createElement('div');
+    typingEl.className = 'typing';
+    typingEl.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+    messages.appendChild(typingEl);
+    scrollToBottom();
+  }
+  function hideTyping(){
+    if (typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl);
+    typingEl = null;
+  }
+
+  async function send(){
+    if (busy) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    busy = true;
+    updateSendEnabled();
+    input.value = '';
+    autoSize();
+    addMsg('user', text);
+    showTyping();
+    currentTextEl = null;
+    stickToBottom = true;
+
+    try {
+      const resp = await fetch('/m/chat', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ message:text }),
+      });
+      if (!resp.ok || !resp.body) {
+        hideTyping();
+        addMsg('pi', 'HTTP ' + resp.status, 'error');
+        return;
+      }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      let firstChunk = true;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (firstChunk) { hideTyping(); firstChunk = false; }
+        buf += decoder.decode(value, { stream:true });
+        let idx;
+        while ((idx = buf.indexOf('\n\n')) !== -1) {
+          const frame = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          if (!frame.trim() || frame.startsWith(':')) continue;
+          let evType = 'message';
+          let dataStr = '';
+          for (const line of frame.split('\n')) {
+            if (line.startsWith('event:')) evType = line.slice(6).trim();
+            else if (line.startsWith('data:')) dataStr += line.slice(5).trim();
+          }
+          let data = {};
+          try { data = JSON.parse(dataStr); } catch {}
+          handleEvent(evType, data);
+        }
+      }
+    } catch (err) {
+      hideTyping();
+      addMsg('pi', String(err && err.message || err), 'error');
+    } finally {
+      hideTyping();
+      if (currentTextEl) currentTextEl.classList.remove('streaming');
+      busy = false;
+      updateSendEnabled();
+      currentTextEl = null;
+    }
+  }
+
+  function handleEvent(type, data){
+    const content = data.content || '';
+    if (type === 'voice') {
+      addMsg('voice', content);
+    } else if (type === 'text') {
+      if (!currentTextEl) currentTextEl = addMsg('pi', '', 'streaming');
+      currentTextEl.textContent += content;
+      scrollToBottom();
+    } else if (type === 'tool') {
+      addMsg('tool', content);
+    } else if (type === 'done') {
+      const stripped = (content || '').replace(/<say>[\s\S]*?<\/say>/g, '').trim();
+      if (currentTextEl) {
+        currentTextEl.classList.remove('streaming');
+        if (stripped) currentTextEl.textContent = stripped;
+        else if (!currentTextEl.textContent) currentTextEl.remove();
+      } else if (stripped) {
+        addMsg('pi', stripped);
+      }
+      currentTextEl = null;
+    } else if (type === 'error') {
+      addMsg('pi', content || 'unknown error', 'error');
+    }
+  }
+
+  sendBtn.addEventListener('click', e => { e.preventDefault(); send(); });
+  input.addEventListener('keydown', e => {
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
+  resetBtn.addEventListener('click', () => {
+    if (busy) return;
+    restoreEmpty();
+    currentTextEl = null;
+    input.value = '';
+    autoSize();
+    updateSendEnabled();
+  });
+  sessionBtn.addEventListener('click', () => setActiveTab('chat'));
+
+  const initialHash = (location.hash || '').replace(/^#\/?/, '').split('/')[0];
+  const storedTab = localStorage.getItem('pios-mobile.activeTab');
+  setActiveTab(initialHash || storedTab || 'home');
+  updateSendEnabled();
+})();
+</script>
+</body>
+</html>

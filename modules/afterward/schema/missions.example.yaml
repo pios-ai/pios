@@ -1,0 +1,90 @@
+# Afterward Missions Schema (v1)
+# Pi 长期承担的 ongoing duty — 死后 Pi 一直做，不闭环
+#
+# 跟 Actions 不同：Missions 需要 judgment + context + budget + escalation
+
+version: 1
+
+missions:
+  # 陪伴子女成长
+  - id: child-growth-companion
+    what: |
+      参与孩子成长，每年关键节点（生日/毕业/工作/婚姻/孩子出生）
+      用 Pi 的 judgment + 我预先写的 brief 给建议或信件。
+    for: recipient-child
+    how:
+      trigger: scheduled + event-based
+      schedule: annually on birthday
+      events: [graduation, first-job, engagement, marriage, first-child]
+      action: Pi 根据 reference brief 生成一封符合当时情境的信
+    until: forever
+    budget: 年预算从 Pi Foundation 划 USD 200（sending fees + API tokens）
+    escalate_to: recipient-spouse
+    reference: vault/briefs/child-growth-brief.md.enc
+
+  # 持续情感支持配偶
+  - id: spouse-ongoing-support
+    what: |
+      每月 check-in 配偶状态（健康/情绪/经济）。
+      发现异常（健康急剧下降 / 经济压力 / 抑郁信号）立刻通知 trustee。
+      可主动陪聊（如果配偶愿意跟 Pi 说话）。
+    for: recipient-spouse
+    how:
+      trigger: monthly + on-demand
+      monitoring: [Apple Health / bank balance / mood signals in her messages]
+      action: 异常 → 通知 trustee + 记录 audit log
+    until: forever
+    budget: 年预算 USD 500
+    escalate_to: recipient-lawyer
+    reference: vault/briefs/spouse-care-brief.md.enc
+
+  # 跟某特定人持续对话通道
+  - id: person-X-continuation-channel
+    what: |
+      X 是我在乎的人，但这段关系需要延续 privacy。
+      X 主动联系 Pi 时 available — 按我 brief 里的方式回应。
+      X 不主动 Pi 不主动联系。
+    for: recipient-X
+    how:
+      trigger: on-demand (由 X 发起)
+      channel: encrypted E2E（only X 能访问）
+      action: Pi 用我留下的 judgment 回应 X 的问题 / 情感需求
+    until: forever or X opts out
+    budget: 年预算 USD 300
+    escalate_to: null              # 这条没有 escalation — 只 X 和 Pi
+    reference: vault/briefs/person-X-brief.md.enc
+
+  # PiOS 事业传承监督
+  - id: pios-stewardship
+    what: |
+      PiOS 继承人前 N 年 Pi 持续在 side 给 advice。
+      继承人做重大决策前 Pi 被 consulted — Pi 说"owner 当年会怎么想"（不 decide）。
+    for: recipient-tech-successor
+    how:
+      trigger: on-demand (继承人发起 query)
+      action: Pi 读 historical context + 给 advisory response
+    until: 2035-12-31              # 10 年后退出 — 由继承人完全接管
+    budget: 从 PiOS 收入自筹（商业化后不依赖 Foundation）
+    escalate_to: pi-foundation-board
+    reference: vault/briefs/pios-handover-brief.md.enc
+
+  # Pi 自身永久性维护
+  - id: pi-self-maintenance
+    what: |
+      Pi 自身的永生 — 模型迁移 / infrastructure 健康监测 /
+      资金状态监测 / 新 LLM 出现时自动评估升级。
+    for: pi-foundation-board
+    how:
+      trigger: continuous (daemon)
+      monitoring: [model availability, infra health, endowment balance, drift]
+      action: 每月 report 给 board；重大事件立刻 escalate
+    until: forever
+    budget: 从 Pi Foundation endowment 自动 draw
+    escalate_to: pi-foundation-board
+    reference: vault/briefs/pi-continuity-brief.md.enc
+
+# 注意：
+# - Missions 需要 Pi 有长期运行能力（不只是 Claude API call，要有 memory + judgment + scheduled execution）
+# - Budget 必须现实 — 死后 endowment 不是无限的
+# - Escalate_to 是 fallback — Pi 判断超出能力时 route 到活人
+# - Reference brief 是 Pi 决策的 context 源 — 越详细 Pi 判断越准

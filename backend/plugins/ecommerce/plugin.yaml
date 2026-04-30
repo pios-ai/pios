@@ -1,0 +1,29 @@
+# Ecommerce (Hawkeye) plugin
+#
+# 消费由 hawkeye agent 产出的选品/诊断/监控扫描报告。
+# hawkeye agent 本身由 pios.yaml.agents.hawkeye 管理，本插件只提供
+# triage hook，让 triage 在有新扫描产出时获得通知。
+
+id: ecommerce
+name: 电商监控（Hawkeye）
+category: ecommerce
+description: 当 hawkeye 产出新扫描报告时触发 triage 决策
+
+# ── Phase-3c-2 registry migration (2026-04-28) ───────────────────────────
+# 参照 wechat / health pilot 模式。见 docs/components/plugin-system.md
+
+provides:
+  card_sources: [ecommerce-scan, hawkeye-pipeline]
+  data_paths:
+    intel_output: "Pi/Output/intel/hawkeye/"
+    radar_output: "Pi/Output/radar/hawkeye/"
+    domain_context: "Projects/ai-ecommerce/DOMAIN.md"
+
+triage_hooks:
+  on_gate:
+    script: scripts/triage-gate.sh
+    timeout_sec: 5
+  on_ingest:
+    script: scripts/triage-ingest.sh
+    timeout_sec: 20
+# ─────────────────────────────────────────────────────────────────────────
